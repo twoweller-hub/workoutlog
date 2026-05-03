@@ -1015,7 +1015,7 @@
       else if (v === 0) barColor = 'var(--surface2)';
       else { const a = 0.35 + (v / maxVal) * 0.65; barColor = `rgba(212,245,60,${a})`; }
       const [, m, d] = date.split('-');
-      const lbl = m + '/' + d;
+      const lbl = Number(m) + '/' + Number(d);
       const col = document.createElement('div');
       col.className = 'bar-col';
       col.innerHTML = `
