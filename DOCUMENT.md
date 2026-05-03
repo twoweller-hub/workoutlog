@@ -16,7 +16,7 @@
 1. [Google スプレッドシート](https://sheets.google.com) を開き、新規スプレッドシートを作成
 2. 名前は「Workout Log」など任意でOK
 3. URL の `/d/` と `/edit` の間にある文字列をコピーしておく  
-   例: `https://docs.google.com/spreadsheets/d/【ここ】/edit`  
+   例: `https://docs.google.com/spreadsheets/d/1-YP6ZvOeyjoT3BkmRgZwUDiLt48Rb94CzwRNFasIIrs/edit`  
    → これが**スプレッドシートID**
 
 ---

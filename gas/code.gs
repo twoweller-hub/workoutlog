@@ -1,4 +1,4 @@
-const SPREADSHEET_ID = 'YOUR_SPREADSHEET_ID';
+const SPREADSHEET_ID = '1-YP6ZvOeyjoT3BkmRgZwUDiLt48Rb94CzwRNFasIIrs';
 const EXERCISES_SHEET = '種目リスト';
 const RECORDS_SHEET = '記録';
 
