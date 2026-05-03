@@ -109,36 +109,41 @@
   }
 
   /* ===== 記録画面 ===== */
-  .exercise-grid {
-    display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;
-  }
-  .exercise-btn {
-    background: var(--surface);
-    border: 1.5px solid var(--border);
-    border-radius: 12px;
+  .ex-dropdown { position: relative; margin-bottom: 20px; }
+  .ex-dropdown-trigger {
+    width: 100%; background: var(--surface);
+    border: 1.5px solid var(--border); border-radius: 12px;
     padding: 14px 16px;
-    display: flex; align-items: center; gap: 14px;
-    cursor: pointer; transition: all 0.15s;
-    position: relative; width: 100%; text-align: left;
+    display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer; text-align: left; transition: border-color 0.15s;
   }
-  .exercise-btn.active {
-    border-color: var(--accent);
-    background: var(--accent-dim);
+  .ex-dropdown-trigger.open {
+    border-color: var(--accent); border-radius: 12px 12px 0 0;
   }
-  .exercise-check {
-    position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
-    width: 22px; height: 22px; border-radius: 50%;
-    border: 1.5px solid var(--border);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 11px; color: transparent;
-    transition: all 0.15s;
+  .ex-dropdown-trigger-left { display: flex; align-items: center; gap: 12px; }
+  .ex-dropdown-trigger-emoji { font-size: 26px; width: 36px; text-align: center; flex-shrink: 0; }
+  .ex-dropdown-trigger-name { font-size: 15px; font-weight: 700; color: var(--text); }
+  .ex-dropdown-placeholder { font-size: 14px; color: var(--text-muted); }
+  .ex-dropdown-arrow { font-size: 10px; color: var(--text-muted); transition: transform 0.2s; }
+  .ex-dropdown-trigger.open .ex-dropdown-arrow { transform: rotate(180deg); }
+  .ex-dropdown-list {
+    display: none; position: absolute; top: 100%; left: 0; right: 0;
+    background: var(--surface); border: 1.5px solid var(--accent);
+    border-top: none; border-radius: 0 0 12px 12px;
+    max-height: 260px; overflow-y: auto; z-index: 50;
   }
-  .exercise-btn.active .exercise-check {
-    background: var(--accent); border-color: var(--accent);
-    color: #111; font-weight: 900;
+  .ex-dropdown-list.open { display: block; }
+  .ex-dropdown-item {
+    width: 100%; background: none; border: none;
+    border-bottom: 1px solid var(--border);
+    padding: 12px 16px;
+    display: flex; align-items: center; gap: 12px;
+    cursor: pointer; text-align: left; transition: background 0.1s;
   }
-  .exercise-icon { font-size: 26px; width: 36px; text-align: center; flex-shrink: 0; }
-  .exercise-name { font-size: 15px; font-weight: 700; color: var(--text); }
+  .ex-dropdown-item:last-child { border-bottom: none; }
+  .ex-dropdown-item.active { background: var(--accent-dim); }
+  .ex-dropdown-item-emoji { font-size: 24px; width: 34px; text-align: center; flex-shrink: 0; }
+  .ex-dropdown-item-name { font-size: 15px; font-weight: 700; color: var(--text); }
 
   .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
   .input-card {
@@ -458,7 +463,7 @@
     .app-title { display: none; }
     .header-row { justify-content: flex-end; }
 
-    .exercise-grid { display: grid; grid-template-columns: 1fr 1fr; }
+    .ex-dropdown-list { max-height: 320px; }
     .summary-grid { grid-template-columns: repeat(4, 1fr); }
     .toast { bottom: 20px; }
   }
@@ -516,8 +521,14 @@
     <!-- 記録ページ -->
     <div class="page active" id="page-record">
       <div class="section-label">種目を選ぶ</div>
-      <div class="exercise-grid" id="exercise-grid">
-        <div class="empty-msg">読み込み中…</div>
+      <div class="ex-dropdown" id="ex-dropdown">
+        <button class="ex-dropdown-trigger" id="ex-dropdown-trigger" onclick="toggleExDropdown()">
+          <div class="ex-dropdown-trigger-left" id="ex-dropdown-selected">
+            <span class="ex-dropdown-placeholder">種目を選ぶ</span>
+          </div>
+          <span class="ex-dropdown-arrow">▼</span>
+        </button>
+        <div class="ex-dropdown-list" id="ex-dropdown-list"></div>
       </div>
 
       <div id="input-area" style="display:none">
@@ -724,24 +735,57 @@
 
   // ── 記録画面 ───────────────────────────────────────────────
   function renderExerciseGrid() {
-    const grid = document.getElementById('exercise-grid');
+    const list = document.getElementById('ex-dropdown-list');
     if (!exercises.length) {
-      grid.innerHTML = '<div class="empty-msg">「種目」タブから種目を追加してください</div>';
+      list.innerHTML = '<div class="empty-msg" style="padding:12px 16px">「種目」タブから種目を追加してください</div>';
       return;
     }
-    grid.innerHTML = exercises.map(ex => `
-      <button class="exercise-btn" data-name="${h(ex.name)}" onclick="selectExercise('${h(ex.name)}')">
-        <div class="exercise-icon">${ex.emoji}</div>
-        <div class="exercise-name">${h(ex.name)}</div>
-        <div class="exercise-check">✓</div>
+    list.innerHTML = exercises.map(ex => `
+      <button class="ex-dropdown-item" data-name="${h(ex.name)}" onclick="selectExercise('${h(ex.name)}')">
+        <div class="ex-dropdown-item-emoji">${ex.emoji}</div>
+        <div class="ex-dropdown-item-name">${h(ex.name)}</div>
       </button>`).join('');
+    if (selectedExercise) {
+      list.querySelectorAll('.ex-dropdown-item').forEach(btn =>
+        btn.classList.toggle('active', btn.dataset.name === selectedExercise)
+      );
+    }
   }
+
+  function toggleExDropdown() {
+    const trigger = document.getElementById('ex-dropdown-trigger');
+    const list = document.getElementById('ex-dropdown-list');
+    const isOpen = list.classList.contains('open');
+    if (isOpen) {
+      trigger.classList.remove('open');
+      list.classList.remove('open');
+    } else {
+      trigger.classList.add('open');
+      list.classList.add('open');
+    }
+  }
+
+  function closeExDropdown() {
+    document.getElementById('ex-dropdown-trigger').classList.remove('open');
+    document.getElementById('ex-dropdown-list').classList.remove('open');
+  }
+
+  document.addEventListener('click', function(e) {
+    const dropdown = document.getElementById('ex-dropdown');
+    if (dropdown && !dropdown.contains(e.target)) closeExDropdown();
+  });
 
   function selectExercise(name) {
     selectedExercise = name;
-    document.querySelectorAll('.exercise-btn').forEach(btn =>
+    const ex = exercises.find(e => e.name === name);
+    const sel = document.getElementById('ex-dropdown-selected');
+    if (ex) {
+      sel.innerHTML = `<div class="ex-dropdown-trigger-emoji">${ex.emoji}</div><div class="ex-dropdown-trigger-name">${h(ex.name)}</div>`;
+    }
+    document.querySelectorAll('.ex-dropdown-item').forEach(btn =>
       btn.classList.toggle('active', btn.dataset.name === name)
     );
+    closeExDropdown();
     const reps = getReps(name);
     const sets = getSets(name);
     document.getElementById('reps-val').textContent = reps;
