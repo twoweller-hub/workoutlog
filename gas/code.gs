@@ -21,6 +21,7 @@ function doPost(e) {
     const data = JSON.parse(e.postData.contents);
     const action = data.action;
     if (action === 'addRecord') return addRecord(data);
+    if (action === 'updateRecord') return updateRecord(data);
     if (action === 'deleteRecord') return deleteRecord(data);
     if (action === 'addExercise') return addExercise(data);
     if (action === 'deleteExercise') return deleteExercise(data);
@@ -92,6 +93,19 @@ function addRecord(data) {
     data.reps, data.sets, data.totalReps,
     data.memo || ''
   ]);
+  return okResponse();
+}
+
+function updateRecord(data) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(RECORDS_SHEET);
+  const values = sheet.getDataRange().getValues();
+  for (let i = 1; i < values.length; i++) {
+    if (String(values[i][0]) === String(data.id)) {
+      sheet.getRange(i + 1, 6, 1, 4).setValues([[data.reps, data.sets, data.totalReps, data.memo || '']]);
+      break;
+    }
+  }
   return okResponse();
 }
 

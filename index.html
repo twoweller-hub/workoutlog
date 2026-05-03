@@ -1,311 +1,649 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Workout Log</title>
-  <link rel="manifest" href="manifest.webmanifest">
-  <meta name="theme-color" content="#0f0f0f">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="WorkoutLog">
-  <link rel="apple-touch-icon" href="icon-192.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
-  <style>
-    :root {
-      --bg: #0f0f0f;
-      --card: #1a1a1a;
-      --border: #2a2a2a;
-      --text: #e8e8e8;
-      --muted: #888;
-      --accent: #d4f53c;
-      --accent-dim: rgba(212, 245, 60, 0.08);
-      --danger: #ff5555;
-      --nav-h: 64px;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Noto Sans JP', sans-serif; }
-    button { font-family: inherit; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WORKOUT LOG</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#111318">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="WorkoutLog">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-    /* ── Layout ───────────────────────────────── */
-    .app-wrapper { display: flex; min-height: 100%; }
-    .sidebar-nav { display: none; }
-    .main-content { flex: 1; min-width: 0; padding-bottom: var(--nav-h); }
-    .page { display: none; padding: 20px 16px 32px; }
-    .page.active { display: block; }
+  :root {
+    --bg: #111318;
+    --surface: #1c1f2a;
+    --surface2: #272b38;
+    --accent: #d4f53c;
+    --accent-dim: rgba(212,245,60,0.12);
+    --text: #eef0f4;
+    --text-sub: #9ba3b5;
+    --text-muted: #6e7789;
+    --border: #2e3244;
+    --danger: #ff4d3a;
+  }
 
-    /* ── Bottom nav ──────────────────────────── */
-    .bottom-nav {
-      position: fixed; bottom: 0; left: 0; right: 0;
-      height: var(--nav-h); background: var(--card);
-      border-top: 1px solid var(--border);
-      display: flex; z-index: 100;
-    }
-    .nav-item {
-      flex: 1; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; gap: 3px;
-      background: none; border: none; cursor: pointer;
-      color: var(--muted); font-size: 11px; padding: 8px;
-      transition: color 0.15s;
-    }
-    .nav-item.active { color: var(--accent); }
-    .nav-item .nav-icon { font-size: 22px; line-height: 1; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    min-height: 100vh;
+  }
 
-    /* ── Page header ─────────────────────────── */
-    .page-title {
-      font-family: 'Bebas Neue', sans-serif; font-size: 26px;
-      letter-spacing: 2px; color: var(--accent); margin-bottom: 18px;
+  /* ===== アプリラッパー ===== */
+  .app-wrapper {
+    max-width: 390px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  /* ===== サイドバー（モバイルでは非表示） ===== */
+  .sidebar-nav { display: none; }
+
+  /* ===== ボトムナビ（モバイル） ===== */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 390px;
+    background: rgba(17,19,24,0.96);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: space-around;
+    padding: 10px 0 24px;
+    z-index: 100;
+  }
+  .nav-item {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    cursor: pointer; padding: 4px 16px;
+    transition: all 0.15s;
+  }
+  .nav-icon { font-size: 22px; opacity: 0.35; transition: all 0.2s; }
+  .nav-label { font-size: 10px; color: var(--text-muted); letter-spacing: 0.5px; transition: color 0.2s; }
+  .nav-item.active .nav-icon { opacity: 1; }
+  .nav-item.active .nav-label { color: var(--accent); }
+
+  /* ===== 共通ヘッダー ===== */
+  .header {
+    padding: 20px 20px 14px;
+    position: sticky; top: 0;
+    background: rgba(17,19,24,0.94);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    z-index: 50;
+  }
+  .header-row { display: flex; align-items: flex-end; justify-content: space-between; }
+  .app-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 30px; letter-spacing: 3px; color: var(--accent); line-height: 1;
+  }
+  .date-label { font-size: 12px; color: var(--text-sub); padding-bottom: 2px; }
+
+  .stats-row {
+    display: flex; gap: 0; margin-top: 14px;
+    border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+  }
+  .stat-cell {
+    flex: 1; padding: 10px 12px; text-align: center;
+    border-right: 1px solid var(--border);
+  }
+  .stat-cell:last-child { border-right: none; }
+  .stat-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px; color: var(--text); line-height: 1;
+  }
+  .stat-num em { font-family: 'Noto Sans JP', sans-serif; font-size: 11px; color: var(--text-sub); font-style: normal; }
+  .stat-label { font-size: 10px; color: var(--text-sub); margin-top: 2px; }
+
+  /* ===== ページ ===== */
+  .page { display: none; padding: 20px; padding-bottom: 90px; }
+  .page.active { display: block; }
+
+  .section-label {
+    font-size: 10px; letter-spacing: 2px; color: var(--text-sub);
+    text-transform: uppercase; margin-bottom: 10px;
+  }
+
+  /* ===== 記録画面 ===== */
+  .exercise-grid {
+    display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;
+  }
+  .exercise-btn {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex; align-items: center; gap: 14px;
+    cursor: pointer; transition: all 0.15s;
+    position: relative; width: 100%; text-align: left;
+  }
+  .exercise-btn.active {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+  }
+  .exercise-check {
+    position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+    width: 22px; height: 22px; border-radius: 50%;
+    border: 1.5px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; color: transparent;
+    transition: all 0.15s;
+  }
+  .exercise-btn.active .exercise-check {
+    background: var(--accent); border-color: var(--accent);
+    color: #111; font-weight: 900;
+  }
+  .exercise-icon { font-size: 26px; width: 36px; text-align: center; flex-shrink: 0; }
+  .exercise-name { font-size: 15px; font-weight: 700; color: var(--text); }
+
+  .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .input-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+  }
+  .input-card-label { font-size: 10px; color: var(--text-sub); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; }
+  .counter { display: flex; align-items: center; justify-content: space-between; }
+  .counter-btn {
+    width: 34px; height: 34px; border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: var(--surface2);
+    color: var(--text); font-size: 20px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-weight: 300; line-height: 1;
+    transition: all 0.1s;
+  }
+  .counter-btn.plus { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+  .counter-val {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 38px; color: var(--text); line-height: 1; min-width: 40px; text-align: center;
+  }
+
+  .memo-wrap { margin-bottom: 20px; }
+  .memo-input {
+    width: 100%; background: var(--surface);
+    border: 1.5px solid var(--border); border-radius: 12px;
+    padding: 12px 14px; color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif; font-size: 14px;
+    resize: none; outline: none; line-height: 1.6;
+  }
+  .memo-input::placeholder { color: var(--text-muted); }
+  .memo-input:focus { border-color: var(--accent); }
+
+  .record-btn {
+    width: 100%; padding: 18px;
+    background: var(--accent); color: #111;
+    border: none; border-radius: 12px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px; letter-spacing: 4px;
+    cursor: pointer; margin-bottom: 24px;
+    transition: opacity 0.15s;
+  }
+  .record-btn:active { opacity: 0.8; }
+  .record-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .log-list { display: flex; flex-direction: column; gap: 8px; }
+  .log-item {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 14px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .log-left { display: flex; align-items: center; gap: 10px; }
+  .log-icon {
+    width: 38px; height: 38px; border-radius: 8px;
+    background: var(--surface2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .log-name { font-size: 14px; font-weight: 700; }
+  .log-time { font-size: 11px; color: var(--text-sub); margin-top: 2px; }
+  .log-right { text-align: right; }
+  .log-total {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px; color: var(--accent); line-height: 1;
+  }
+  .log-total em { font-family: 'Noto Sans JP', sans-serif; font-size: 11px; color: var(--text-sub); font-style: normal; }
+  .log-detail { font-size: 11px; color: var(--text-sub); margin-top: 1px; }
+
+  /* ===== 履歴画面 ===== */
+  .history-day { margin-bottom: 22px; }
+  .history-day-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .history-day-date {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px; letter-spacing: 1px; color: var(--text-sub); white-space: nowrap;
+  }
+  .history-day-line { flex: 1; height: 1px; background: var(--border); }
+  .history-day-badge {
+    font-size: 10px; color: var(--text-sub);
+    background: var(--surface2); padding: 2px 8px; border-radius: 10px;
+  }
+  .history-item {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 14px;
+    display: flex; flex-direction: column; gap: 8px; margin-bottom: 6px;
+  }
+  .history-item-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+  .history-left { display: flex; align-items: center; gap: 10px; flex: 1; }
+  .history-icon {
+    width: 38px; height: 38px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; flex-shrink: 0;
+  }
+  .history-name { font-size: 14px; font-weight: 700; }
+  .history-meta { font-size: 11px; color: var(--text-sub); margin-top: 2px; }
+  .history-right { display: flex; align-items: flex-start; gap: 8px; flex-shrink: 0; }
+  .history-nums { text-align: right; }
+  .history-total {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px; color: var(--accent); line-height: 1;
+  }
+  .history-total em { font-family: 'Noto Sans JP', sans-serif; font-size: 11px; color: var(--text-sub); font-style: normal; }
+  .history-detail { font-size: 11px; color: var(--text-sub); }
+  .history-edit-btn {
+    width: 30px; height: 30px; border-radius: 7px;
+    border: 1px solid var(--border); background: var(--surface2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; cursor: pointer; flex-shrink: 0; margin-top: 1px;
+  }
+  .history-memo-row {
+    font-size: 11px; color: var(--text-sub);
+    background: var(--surface2); border-radius: 6px;
+    padding: 6px 10px; line-height: 1.5; word-break: break-all;
+  }
+
+  /* ===== グラフ画面 ===== */
+  .exercise-tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+  .ex-tab {
+    padding: 6px 14px; border-radius: 20px;
+    border: 1.5px solid var(--border);
+    font-size: 12px; font-weight: 700; color: var(--text-sub);
+    cursor: pointer; background: var(--surface);
+    display: flex; align-items: center; gap: 5px; transition: all 0.15s;
+  }
+  .ex-tab.active { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+
+  .period-tabs { display: flex; gap: 6px; margin-bottom: 16px; }
+  .period-tab {
+    padding: 5px 14px; border-radius: 6px;
+    border: 1px solid var(--border);
+    font-size: 11px; font-weight: 700; color: var(--text-sub);
+    cursor: pointer; background: var(--surface); transition: all 0.15s;
+  }
+  .period-tab.active { background: var(--accent); color: #111; border-color: var(--accent); }
+
+  .graph-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px; margin-bottom: 14px;
+  }
+  .graph-card-title { font-size: 11px; color: var(--text-sub); letter-spacing: 1px; margin-bottom: 14px; }
+
+  .bar-chart-scroll {
+    overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 4px;
+  }
+  .bar-chart-scroll::-webkit-scrollbar { height: 3px; }
+  .bar-chart-scroll::-webkit-scrollbar-track { background: var(--surface2); border-radius: 2px; }
+  .bar-chart-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .bar-chart { display: flex; align-items: flex-end; gap: 6px; height: 165px; width: max-content; min-width: 100%; }
+  .bar-col { width: 14px; display: flex; flex-direction: column; align-items: center; gap: 3px; flex-shrink: 0; }
+  .bar { width: 100%; border-radius: 3px 3px 0 0; background: var(--surface2); min-height: 3px; }
+  .bar-lbl { font-size: 8px; color: var(--text-muted); text-align: center; white-space: nowrap; }
+  .bar-v { font-size: 8px; color: var(--text-sub); }
+
+  .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .summary-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px;
+  }
+  .summary-lbl { font-size: 10px; color: var(--text-sub); letter-spacing: 1px; margin-bottom: 6px; }
+  .summary-val {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 30px; color: var(--text); line-height: 1;
+  }
+  .summary-val em { font-family: 'Noto Sans JP', sans-serif; font-size: 12px; color: var(--text-sub); font-style: normal; }
+  .summary-sub { font-size: 10px; color: var(--text-sub); margin-top: 4px; }
+
+  /* ===== 種目管理画面 ===== */
+  .add-ex-form {
+    background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: 12px; padding: 16px; margin-bottom: 20px;
+  }
+  .add-ex-row { display: flex; gap: 8px; align-items: flex-end; }
+  .add-ex-group { display: flex; flex-direction: column; gap: 6px; }
+  .add-ex-label { font-size: 10px; color: var(--text-sub); letter-spacing: 1px; }
+  .add-ex-input {
+    background: var(--bg); border: 1.5px solid var(--border); border-radius: 8px;
+    padding: 10px 12px; color: var(--text); font-size: 14px;
+    font-family: 'Noto Sans JP', sans-serif; outline: none; width: 100%;
+  }
+  .add-ex-input:focus { border-color: var(--accent); }
+  .emoji-inp { width: 60px; text-align: center; font-size: 20px; }
+  .add-ex-btn {
+    padding: 10px 18px; background: var(--accent); color: #111;
+    border: none; border-radius: 8px; font-size: 14px; font-weight: 700;
+    font-family: 'Noto Sans JP', sans-serif; cursor: pointer; white-space: nowrap; flex-shrink: 0;
+  }
+  .add-ex-btn:active { opacity: 0.8; }
+  .ex-manage-list { display: flex; flex-direction: column; }
+  .ex-manage-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 0; border-bottom: 1px solid var(--border);
+  }
+  .ex-manage-item:last-child { border-bottom: none; }
+  .ex-drag-handle { color: var(--text-muted); cursor: grab; font-size: 18px; padding: 4px 2px; flex-shrink: 0; }
+  .ex-manage-emoji { font-size: 24px; flex-shrink: 0; }
+  .ex-manage-name { flex: 1; font-size: 14px; font-weight: 500; }
+  .ex-delete-btn {
+    background: none; border: none; color: var(--text-muted);
+    font-size: 18px; cursor: pointer; padding: 4px 8px; flex-shrink: 0;
+  }
+  .ex-delete-btn:active { color: var(--danger); }
+
+  /* ===== モーダル ===== */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6); z-index: 200;
+    align-items: center; justify-content: center; padding: 24px;
+  }
+  .modal-overlay.active { display: flex; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 24px;
+    width: 100%; max-width: 320px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  .modal-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .modal-meta { font-size: 12px; color: var(--text-sub); margin-bottom: 20px; }
+  .modal-input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .modal-input-card {
+    background: var(--surface2); border: 1.5px solid var(--border);
+    border-radius: 10px; padding: 12px;
+  }
+  .modal-input-label { font-size: 10px; color: var(--text-sub); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+  .modal-counter { display: flex; align-items: center; justify-content: space-between; }
+  .modal-counter-btn {
+    width: 28px; height: 28px; border-radius: 6px;
+    border: 1.5px solid var(--border); background: var(--bg);
+    color: var(--text); font-size: 18px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+  }
+  .modal-counter-btn.plus { border-color: var(--accent); color: var(--accent); }
+  .modal-counter-val {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 30px; color: var(--text); line-height: 1; min-width: 32px; text-align: center;
+  }
+  .modal-memo {
+    width: 100%; background: var(--surface2);
+    border: 1.5px solid var(--border); border-radius: 10px;
+    padding: 10px 12px; color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif; font-size: 14px;
+    resize: none; outline: none; line-height: 1.6; margin-bottom: 20px;
+  }
+  .modal-memo:focus { border-color: var(--accent); }
+  .modal-memo::placeholder { color: var(--text-muted); }
+  .modal-buttons { display: flex; gap: 8px; }
+  .modal-btn {
+    flex: 1; padding: 12px; border: none; border-radius: 10px;
+    font-size: 14px; font-weight: 700; font-family: 'Noto Sans JP', sans-serif; cursor: pointer;
+  }
+  .modal-btn-cancel { background: var(--surface2); color: var(--text-sub); }
+  .modal-btn-delete { background: var(--danger); color: #fff; }
+  .modal-btn-save { background: var(--accent); color: #111; }
+
+  /* ===== Toast ===== */
+  .toast {
+    position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+    background: var(--accent); color: #111;
+    padding: 10px 20px; border-radius: 20px;
+    font-size: 13px; font-weight: 700; z-index: 300;
+    opacity: 0; transition: opacity 0.2s; pointer-events: none; white-space: nowrap;
+  }
+  .toast.show { opacity: 1; }
+
+  /* ===== Empty / Loading ===== */
+  .empty-msg { text-align: center; color: var(--text-muted); padding: 40px 0; font-size: 14px; }
+
+  /* ==============================================
+     デスクトップ レイアウト（640px 以上）
+  ============================================== */
+  @media (min-width: 640px) {
+    body { overflow: hidden; display: flex; justify-content: center; }
+
+    .app-wrapper {
+      max-width: 960px; width: 100%; height: 100vh;
+      display: flex; align-items: stretch; overflow: hidden;
     }
 
-    /* ── Stats bar ───────────────────────────── */
-    .stats-bar { display: flex; gap: 8px; margin-bottom: 20px; }
-    .stat-card {
-      flex: 1; background: var(--card); border: 1px solid var(--border);
-      border-radius: 10px; padding: 12px 6px; text-align: center;
+    .sidebar-nav {
+      display: flex; flex-direction: column; width: 200px; flex-shrink: 0;
+      height: 100vh; background: var(--bg); border-right: 1px solid var(--border);
     }
-    .stat-value { font-size: 26px; font-weight: 700; color: var(--accent); line-height: 1; }
-    .stat-label { font-size: 10px; color: var(--muted); margin-top: 4px; }
+    .sidebar-logo {
+      font-family: 'Bebas Neue', sans-serif; font-size: 21px;
+      letter-spacing: 3px; color: var(--accent); line-height: 1.15;
+      padding: 24px 20px 22px; border-bottom: 1px solid var(--border);
+      margin-bottom: 8px;
+    }
+    .sidebar-nav .nav-item {
+      flex-direction: row; justify-content: flex-start;
+      padding: 14px 20px; gap: 12px; border-left: 3px solid transparent;
+      transition: all 0.15s;
+    }
+    .sidebar-nav .nav-item.active {
+      border-left-color: var(--accent); background: var(--accent-dim);
+    }
+    .sidebar-nav .nav-icon { font-size: 20px; opacity: 0.45; }
+    .sidebar-nav .nav-item.active .nav-icon { opacity: 1; }
+    .sidebar-nav .nav-label { font-size: 14px; font-weight: 500; }
+    .sidebar-nav .nav-item.active .nav-label { color: var(--accent); }
 
-    /* ── Exercise grid ───────────────────────── */
-    .exercise-grid { display: flex; flex-direction: column; gap: 10px; }
-    .exercise-card {
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: 12px; padding: 16px;
-    }
-    .card-top { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
-    .card-emoji { font-size: 32px; line-height: 1; }
-    .card-name { font-size: 16px; font-weight: 500; }
-    .card-controls { display: flex; gap: 10px; }
-    .ctrl-group { flex: 1; }
-    .ctrl-label { font-size: 11px; color: var(--muted); margin-bottom: 5px; }
-    .counter {
-      display: flex; align-items: center;
-      background: var(--bg); border: 1px solid var(--border);
-      border-radius: 8px; overflow: hidden; height: 38px;
-    }
-    .ctr-btn {
-      width: 38px; height: 38px; border: none; background: none;
-      color: var(--text); font-size: 22px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0; transition: background 0.1s;
-    }
-    .ctr-btn:active { background: var(--border); }
-    .ctr-val { flex: 1; text-align: center; font-size: 18px; font-weight: 700; }
-    .record-btn {
-      width: 100%; margin-top: 14px; padding: 11px;
-      background: var(--accent); color: #111;
-      border: none; border-radius: 8px;
-      font-size: 14px; font-weight: 700; cursor: pointer;
-      transition: opacity 0.15s;
-    }
-    .record-btn:active { opacity: 0.75; }
+    .main-content { flex: 1; min-width: 0; height: 100vh; overflow-y: auto; }
+    .bottom-nav { display: none; }
+    .page { padding-bottom: 48px; }
 
-    /* ── Session summary ─────────────────────── */
-    .session-summary {
-      margin-top: 20px; padding: 14px 16px;
-      background: var(--card); border: 1px solid var(--accent);
-      border-radius: 10px; font-size: 14px; color: var(--muted);
-    }
-    .session-summary strong { color: var(--accent); }
+    /* 案A: デスクトップではヘッダーのタイトルのみ非表示 */
+    .app-title { display: none; }
+    .header-row { justify-content: flex-end; }
 
-    /* ── History ─────────────────────────────── */
-    .history-group { margin-bottom: 24px; }
-    .history-date {
-      font-size: 12px; color: var(--muted); padding-bottom: 8px;
-      border-bottom: 1px solid var(--border); margin-bottom: 2px;
-    }
-    .history-item {
-      display: flex; align-items: center; gap: 10px;
-      padding: 12px 0; border-bottom: 1px solid var(--border);
-    }
-    .history-item:last-child { border-bottom: none; }
-    .h-emoji { font-size: 24px; flex-shrink: 0; }
-    .h-info { flex: 1; min-width: 0; }
-    .h-name { font-size: 14px; font-weight: 500; }
-    .h-detail { font-size: 12px; color: var(--muted); margin-top: 2px; }
-    .h-time { font-size: 11px; color: var(--muted); flex-shrink: 0; }
-    .del-btn {
-      background: none; border: none; color: var(--muted);
-      font-size: 18px; cursor: pointer; padding: 4px 8px;
-      flex-shrink: 0; transition: color 0.15s;
-    }
-    .del-btn:active { color: var(--danger); }
-
-    /* ── Exercises management ────────────────── */
-    .add-form {
-      background: var(--card); border: 1px solid var(--border);
-      border-radius: 12px; padding: 16px; margin-bottom: 20px;
-    }
-    .form-row { display: flex; gap: 8px; align-items: flex-end; }
-    .f-group { display: flex; flex-direction: column; gap: 5px; }
-    .f-label { font-size: 11px; color: var(--muted); }
-    .f-input {
-      background: var(--bg); border: 1px solid var(--border);
-      border-radius: 8px; padding: 10px 12px;
-      color: var(--text); font-size: 14px; font-family: inherit;
-      outline: none; width: 100%;
-    }
-    .f-input:focus { border-color: var(--accent); }
-    .emoji-inp { width: 60px; text-align: center; font-size: 20px; }
-    .add-btn {
-      padding: 10px 18px; background: var(--accent); color: #111;
-      border: none; border-radius: 8px; font-size: 14px; font-weight: 700;
-      cursor: pointer; white-space: nowrap; flex-shrink: 0;
-    }
-    .add-btn:active { opacity: 0.8; }
-    .ex-list { display: flex; flex-direction: column; }
-    .ex-item {
-      display: flex; align-items: center; gap: 10px;
-      padding: 14px 0; border-bottom: 1px solid var(--border);
-      cursor: default;
-    }
-    .ex-item:last-child { border-bottom: none; }
-    .drag-handle { color: var(--muted); cursor: grab; font-size: 18px; padding: 4px 2px; }
-    .ex-emoji { font-size: 24px; }
-    .ex-name { flex: 1; font-size: 14px; }
-
-    /* ── Toast ───────────────────────────────── */
-    .toast {
-      position: fixed; bottom: calc(var(--nav-h) + 12px); left: 50%;
-      transform: translateX(-50%);
-      background: var(--accent); color: #111;
-      padding: 10px 20px; border-radius: 20px;
-      font-size: 13px; font-weight: 700;
-      z-index: 200; opacity: 0; transition: opacity 0.2s;
-      pointer-events: none; white-space: nowrap;
-    }
-    .toast.show { opacity: 1; }
-
-    /* ── Misc ────────────────────────────────── */
-    .empty-msg { text-align: center; color: var(--muted); padding: 48px 0; font-size: 14px; }
-    .loading-msg { text-align: center; color: var(--muted); padding: 48px 0; font-size: 14px; }
-
-    /* ── Desktop (640px+) ────────────────────── */
-    @media (min-width: 640px) {
-      body { overflow: hidden; display: flex; justify-content: center; }
-      .app-wrapper {
-        max-width: 960px; width: 100%; height: 100vh;
-        display: flex; align-items: stretch; overflow: hidden;
-      }
-      .sidebar-nav {
-        display: flex; flex-direction: column; width: 200px; flex-shrink: 0;
-        height: 100vh; background: var(--bg); border-right: 1px solid var(--border);
-      }
-      .sidebar-logo {
-        font-family: 'Bebas Neue', sans-serif; font-size: 21px;
-        letter-spacing: 3px; color: var(--accent); line-height: 1.15;
-        padding: 24px 20px 22px; border-bottom: 1px solid var(--border);
-        margin-bottom: 8px;
-      }
-      .sidebar-nav .nav-item {
-        flex-direction: row; justify-content: flex-start;
-        padding: 14px 20px; gap: 12px; font-size: 14px;
-        border-left: 3px solid transparent;
-      }
-      .sidebar-nav .nav-item.active {
-        border-left-color: var(--accent);
-        background: var(--accent-dim);
-        color: var(--accent);
-      }
-      .sidebar-nav .nav-item .nav-icon { font-size: 20px; }
-      .main-content { flex: 1; min-width: 0; height: 100vh; overflow-y: auto; padding-bottom: 0; }
-      .page { padding: 28px 32px 48px; }
-      .bottom-nav { display: none; }
-      .exercise-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-      .toast { bottom: 20px; }
-    }
-  </style>
+    .exercise-grid { display: grid; grid-template-columns: 1fr 1fr; }
+    .summary-grid { grid-template-columns: repeat(4, 1fr); }
+    .toast { bottom: 20px; }
+  }
+</style>
 </head>
 <body>
 
 <div class="app-wrapper">
 
-  <!-- Sidebar (desktop only) -->
+  <!-- サイドバー（デスクトップのみ） -->
   <nav class="sidebar-nav">
     <div class="sidebar-logo">WORKOUT<br>LOG</div>
-    <button class="nav-item active" data-page="record">
-      <span class="nav-icon">🏋️</span>記録
-    </button>
-    <button class="nav-item" data-page="history">
-      <span class="nav-icon">📋</span>履歴
-    </button>
-    <button class="nav-item" data-page="exercises">
-      <span class="nav-icon">⚙️</span>種目
-    </button>
+    <div class="nav-item active" data-page="record" onclick="switchPage('record')">
+      <div class="nav-icon">📝</div>
+      <div class="nav-label">記録</div>
+    </div>
+    <div class="nav-item" data-page="history" onclick="switchPage('history')">
+      <div class="nav-icon">📋</div>
+      <div class="nav-label">履歴</div>
+    </div>
+    <div class="nav-item" data-page="graph" onclick="switchPage('graph')">
+      <div class="nav-icon">📈</div>
+      <div class="nav-label">グラフ</div>
+    </div>
+    <div class="nav-item" data-page="exercises" onclick="switchPage('exercises')">
+      <div class="nav-icon">⚙️</div>
+      <div class="nav-label">種目</div>
+    </div>
   </nav>
 
-  <main class="main-content">
+  <div class="main-content">
 
-    <!-- ── Record page ── -->
-    <section id="page-record" class="page active">
-      <div class="page-title">RECORD</div>
-
-      <div class="stats-bar">
-        <div class="stat-card">
-          <div class="stat-value" id="stat-today">—</div>
-          <div class="stat-label">今日</div>
+    <!-- ヘッダー（共通） -->
+    <div class="header">
+      <div class="header-row">
+        <div class="app-title">WORKOUT LOG</div>
+        <div class="date-label" id="header-date"></div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-cell">
+          <div class="stat-num"><span id="stat-today">0</span><em>回</em></div>
+          <div class="stat-label">今日の記録</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-value" id="stat-total">—</div>
-          <div class="stat-label">通算</div>
+        <div class="stat-cell">
+          <div class="stat-num"><span id="stat-streak">0</span><em>日</em></div>
+          <div class="stat-label">継続日数</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-value" id="stat-streak">—</div>
-          <div class="stat-label">連続日数</div>
+        <div class="stat-cell">
+          <div class="stat-num"><span id="stat-total">0</span><em>回</em></div>
+          <div class="stat-label">累計記録</div>
         </div>
       </div>
+    </div>
 
-      <div id="exercise-grid" class="exercise-grid">
-        <div class="loading-msg">読み込み中…</div>
+    <!-- 記録ページ -->
+    <div class="page active" id="page-record">
+      <div class="section-label">種目を選ぶ</div>
+      <div class="exercise-grid" id="exercise-grid">
+        <div class="empty-msg">読み込み中…</div>
       </div>
 
-      <div id="session-summary" class="session-summary" style="display:none">
-        今回: <strong id="sess-sets">0</strong> セット ／ 合計 <strong id="sess-reps">0</strong> 回
-      </div>
-    </section>
+      <div id="input-area" style="display:none">
+        <div class="section-label">回数 / セット数</div>
+        <div class="input-grid">
+          <div class="input-card">
+            <div class="input-card-label">回数</div>
+            <div class="counter">
+              <div class="counter-btn" onclick="changeCounter('reps',-1)">−</div>
+              <div class="counter-val" id="reps-val">10</div>
+              <div class="counter-btn plus" onclick="changeCounter('reps',1)">＋</div>
+            </div>
+          </div>
+          <div class="input-card">
+            <div class="input-card-label">セット数</div>
+            <div class="counter">
+              <div class="counter-btn" onclick="changeCounter('sets',-1)">−</div>
+              <div class="counter-val" id="sets-val">3</div>
+              <div class="counter-btn plus" onclick="changeCounter('sets',1)">＋</div>
+            </div>
+          </div>
+        </div>
 
-    <!-- ── History page ── -->
-    <section id="page-history" class="page">
-      <div class="page-title">HISTORY</div>
+        <div class="section-label">メモ（任意）</div>
+        <div class="memo-wrap">
+          <textarea class="memo-input" id="record-memo" rows="2" placeholder="今日の調子、気づきなど…"></textarea>
+        </div>
+
+        <button class="record-btn" onclick="onRecord()">RECORD</button>
+      </div>
+
+      <div id="today-log-section" style="display:none">
+        <div class="section-label">今日のログ</div>
+        <div class="log-list" id="today-log-list"></div>
+      </div>
+    </div>
+
+    <!-- 履歴ページ -->
+    <div class="page" id="page-history">
       <div id="history-list"></div>
-    </section>
+    </div>
 
-    <!-- ── Exercises page ── -->
-    <section id="page-exercises" class="page">
-      <div class="page-title">EXERCISES</div>
-      <div class="add-form">
-        <div class="form-row">
-          <div class="f-group">
-            <div class="f-label">絵文字</div>
-            <input type="text" id="inp-emoji" class="f-input emoji-inp" placeholder="💪" maxlength="2">
+    <!-- グラフページ -->
+    <div class="page" id="page-graph">
+      <div class="section-label">種目を選ぶ</div>
+      <div class="exercise-tabs" id="graph-ex-tabs"></div>
+
+      <div class="period-tabs">
+        <div class="period-tab" data-days="7" onclick="selectPeriod(this)">7日</div>
+        <div class="period-tab active" data-days="30" onclick="selectPeriod(this)">30日</div>
+        <div class="period-tab" data-days="90" onclick="selectPeriod(this)">3ヶ月</div>
+      </div>
+
+      <div class="summary-grid" style="margin-bottom:14px;" id="graph-summary"></div>
+
+      <div class="graph-card">
+        <div class="graph-card-title" id="graph-chart-title">日別 合計回数</div>
+        <div class="bar-chart-scroll"><div class="bar-chart" id="bar-chart"></div></div>
+      </div>
+    </div>
+
+    <!-- 種目管理ページ -->
+    <div class="page" id="page-exercises">
+      <div class="add-ex-form">
+        <div class="add-ex-row">
+          <div class="add-ex-group">
+            <div class="add-ex-label">絵文字</div>
+            <input type="text" id="inp-emoji" class="add-ex-input emoji-inp" placeholder="💪" maxlength="2">
           </div>
-          <div class="f-group" style="flex:1">
-            <div class="f-label">種目名</div>
-            <input type="text" id="inp-name" class="f-input" placeholder="例：スクワット">
+          <div class="add-ex-group" style="flex:1">
+            <div class="add-ex-label">種目名</div>
+            <input type="text" id="inp-name" class="add-ex-input" placeholder="例：スクワット">
           </div>
-          <button class="add-btn" id="btn-add-exercise">追加</button>
+          <button class="add-ex-btn" onclick="onAddExercise()">追加</button>
         </div>
       </div>
-      <div id="exercise-list" class="ex-list"></div>
-    </section>
+      <div id="ex-manage-list" class="ex-manage-list"></div>
+    </div>
 
-  </main>
+  </div><!-- /.main-content -->
+</div><!-- /.app-wrapper -->
+
+<!-- ボトムナビ（モバイルのみ） -->
+<div class="bottom-nav">
+  <div class="nav-item active" data-page="record" onclick="switchPage('record')">
+    <div class="nav-icon">📝</div>
+    <div class="nav-label">記録</div>
+  </div>
+  <div class="nav-item" data-page="history" onclick="switchPage('history')">
+    <div class="nav-icon">📋</div>
+    <div class="nav-label">履歴</div>
+  </div>
+  <div class="nav-item" data-page="graph" onclick="switchPage('graph')">
+    <div class="nav-icon">📈</div>
+    <div class="nav-label">グラフ</div>
+  </div>
+  <div class="nav-item" data-page="exercises" onclick="switchPage('exercises')">
+    <div class="nav-icon">⚙️</div>
+    <div class="nav-label">種目</div>
+  </div>
 </div>
 
-<!-- Bottom nav (mobile only) -->
-<nav class="bottom-nav">
-  <button class="nav-item active" data-page="record">
-    <span class="nav-icon">🏋️</span>記録
-  </button>
-  <button class="nav-item" data-page="history">
-    <span class="nav-icon">📋</span>履歴
-  </button>
-  <button class="nav-item" data-page="exercises">
-    <span class="nav-icon">⚙️</span>種目
-  </button>
-</nav>
+<!-- 編集モーダル -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <div class="modal-title" id="edit-modal-name"></div>
+    <div class="modal-meta" id="edit-modal-meta"></div>
+    <div class="modal-input-grid">
+      <div class="modal-input-card">
+        <div class="modal-input-label">回数</div>
+        <div class="modal-counter">
+          <div class="modal-counter-btn" onclick="changeModalCounter('reps',-1)">−</div>
+          <div class="modal-counter-val" id="modal-reps-val">10</div>
+          <div class="modal-counter-btn plus" onclick="changeModalCounter('reps',1)">＋</div>
+        </div>
+      </div>
+      <div class="modal-input-card">
+        <div class="modal-input-label">セット数</div>
+        <div class="modal-counter">
+          <div class="modal-counter-btn" onclick="changeModalCounter('sets',-1)">−</div>
+          <div class="modal-counter-val" id="modal-sets-val">3</div>
+          <div class="modal-counter-btn plus" onclick="changeModalCounter('sets',1)">＋</div>
+        </div>
+      </div>
+    </div>
+    <textarea class="modal-memo" id="modal-memo" rows="2" placeholder="メモ（任意）"></textarea>
+    <div class="modal-buttons">
+      <button class="modal-btn modal-btn-delete" onclick="onModalDelete()">削除</button>
+      <button class="modal-btn modal-btn-cancel" onclick="closeEditModal()">キャンセル</button>
+      <button class="modal-btn modal-btn-save" onclick="onModalSave()">保存</button>
+    </div>
+  </div>
+</div>
 
 <div class="toast" id="toast"></div>
 
@@ -314,11 +652,39 @@
 
   let exercises = [];
   let records = [];
-  let stats = { todayCount: 0, totalCount: 0, streak: 0 };
-  let sessSets = 0;
-  let sessReps = 0;
+  let selectedExercise = null;
+  let editingRecordId = null;
+  let currentGraphExercise = null;
+  let currentPeriodDays = 30;
 
-  // ── Navigation ────────────────────────────────────────────────
+  // ── 初期化 ──────────────────────────────────────────────────
+  function init() {
+    const now = new Date();
+    document.getElementById('header-date').textContent =
+      now.getFullYear() + ' / ' +
+      String(now.getMonth() + 1).padStart(2, '0') + ' / ' +
+      String(now.getDate()).padStart(2, '0');
+    loadData();
+  }
+
+  // ── データ読み込み（JSONP） ────────────────────────────────
+  function loadData() {
+    const cb = 'cb_' + Date.now();
+    const s = document.createElement('script');
+    window[cb] = function(data) {
+      delete window[cb]; s.remove();
+      if (data.error) { renderExerciseGrid(); return; }
+      exercises = data.exercises || [];
+      records = data.records || [];
+      renderStats();
+      renderExerciseGrid();
+    };
+    s.onerror = () => { delete window[cb]; s.remove(); renderExerciseGrid(); };
+    s.src = GAS_URL + '?callback=' + cb;
+    document.head.appendChild(s);
+  }
+
+  // ── ナビゲーション ─────────────────────────────────────────
   function switchPage(name) {
     document.querySelectorAll('.page').forEach(p =>
       p.classList.toggle('active', p.id === 'page-' + name)
@@ -327,136 +693,76 @@
       n.classList.toggle('active', n.dataset.page === name)
     );
     if (name === 'history') renderHistory();
-    if (name === 'exercises') renderExerciseList();
+    if (name === 'graph') renderGraph();
+    if (name === 'exercises') renderExerciseManagement();
   }
 
-  document.querySelectorAll('.nav-item').forEach(btn =>
-    btn.addEventListener('click', () => switchPage(btn.dataset.page))
-  );
-
-  // ── localStorage helpers ──────────────────────────────────────
-  function getReps(name) { return (JSON.parse(localStorage.getItem('wl_reps') || '{}')[name]) ?? 10; }
-  function getSets(name) { return (JSON.parse(localStorage.getItem('wl_sets') || '{}')[name]) ?? 3; }
-  function saveReps(name, v) { const d = JSON.parse(localStorage.getItem('wl_reps') || '{}'); d[name] = v; localStorage.setItem('wl_reps', JSON.stringify(d)); }
-  function saveSets(name, v) { const d = JSON.parse(localStorage.getItem('wl_sets') || '{}'); d[name] = v; localStorage.setItem('wl_sets', JSON.stringify(d)); }
-
-  // ── Load from GAS (JSONP) ─────────────────────────────────────
-  function loadData() {
-    const cb = 'cb_' + Date.now();
-    const s = document.createElement('script');
-    window[cb] = function(data) {
-      delete window[cb];
-      s.remove();
-      if (data.error) { console.error(data.error); renderError(); return; }
-      exercises = data.exercises || [];
-      records = data.records || [];
-      stats = data.stats || { todayCount: 0, totalCount: 0, streak: 0 };
-      renderStats();
-      renderExerciseGrid();
-    };
-    s.onerror = () => { delete window[cb]; s.remove(); renderError(); };
-    s.src = GAS_URL + '?callback=' + cb;
-    document.head.appendChild(s);
-  }
-
-  function renderError() {
-    document.getElementById('exercise-grid').innerHTML =
-      '<div class="empty-msg">データの読み込みに失敗しました</div>';
-  }
-
-  // ── Stats ─────────────────────────────────────────────────────
-  function recalcStats() {
+  // ── Stats ──────────────────────────────────────────────────
+  function renderStats() {
     const today = todayStr();
-    stats.todayCount = records.filter(r => r.date === today).length;
-    stats.totalCount = records.length;
+    const todayCount = records.filter(r => r.date === today).length;
+    const totalCount = records.length;
     const dateSet = new Set(records.map(r => r.date));
     let streak = 0;
     const d = new Date();
     if (!dateSet.has(today)) d.setDate(d.getDate() - 1);
     for (let i = 0; i < 3650; i++) {
       if (!dateSet.has(fmtDate(d))) break;
-      streak++;
-      d.setDate(d.getDate() - 1);
+      streak++; d.setDate(d.getDate() - 1);
     }
-    stats.streak = streak;
-    renderStats();
+    document.getElementById('stat-today').textContent = todayCount;
+    document.getElementById('stat-streak').textContent = streak;
+    document.getElementById('stat-total').textContent = totalCount;
   }
 
-  function renderStats() {
-    document.getElementById('stat-today').textContent = stats.todayCount;
-    document.getElementById('stat-total').textContent = stats.totalCount;
-    document.getElementById('stat-streak').textContent = stats.streak;
-  }
-
-  // ── Exercise grid ─────────────────────────────────────────────
+  // ── 記録画面 ───────────────────────────────────────────────
   function renderExerciseGrid() {
     const grid = document.getElementById('exercise-grid');
     if (!exercises.length) {
       grid.innerHTML = '<div class="empty-msg">「種目」タブから種目を追加してください</div>';
       return;
     }
-    grid.innerHTML = exercises.map(ex => cardHTML(ex)).join('');
-    grid.querySelectorAll('.ctr-btn').forEach(btn =>
-      btn.addEventListener('click', () => onCounterBtn(btn))
-    );
-    grid.querySelectorAll('.record-btn').forEach(btn =>
-      btn.addEventListener('click', () => onRecord(btn))
-    );
+    grid.innerHTML = exercises.map(ex => `
+      <button class="exercise-btn" data-name="${h(ex.name)}" onclick="selectExercise('${h(ex.name)}')">
+        <div class="exercise-icon">${ex.emoji}</div>
+        <div class="exercise-name">${h(ex.name)}</div>
+        <div class="exercise-check">✓</div>
+      </button>`).join('');
   }
 
-  function cardHTML(ex) {
-    const reps = getReps(ex.name);
-    const sets = getSets(ex.name);
-    return `
-      <div class="exercise-card" data-name="${h(ex.name)}">
-        <div class="card-top">
-          <span class="card-emoji">${ex.emoji}</span>
-          <span class="card-name">${h(ex.name)}</span>
-        </div>
-        <div class="card-controls">
-          <div class="ctrl-group">
-            <div class="ctrl-label">回数</div>
-            <div class="counter" data-type="reps">
-              <button class="ctr-btn" data-delta="-1">−</button>
-              <span class="ctr-val">${reps}</span>
-              <button class="ctr-btn" data-delta="1">＋</button>
-            </div>
-          </div>
-          <div class="ctrl-group">
-            <div class="ctrl-label">セット数</div>
-            <div class="counter" data-type="sets">
-              <button class="ctr-btn" data-delta="-1">−</button>
-              <span class="ctr-val">${sets}</span>
-              <button class="ctr-btn" data-delta="1">＋</button>
-            </div>
-          </div>
-        </div>
-        <button class="record-btn">記録する</button>
-      </div>`;
+  function selectExercise(name) {
+    selectedExercise = name;
+    document.querySelectorAll('.exercise-btn').forEach(btn =>
+      btn.classList.toggle('active', btn.dataset.name === name)
+    );
+    const reps = getReps(name);
+    const sets = getSets(name);
+    document.getElementById('reps-val').textContent = reps;
+    document.getElementById('sets-val').textContent = sets;
+    document.getElementById('input-area').style.display = '';
+    document.getElementById('record-memo').value = '';
   }
 
-  function onCounterBtn(btn) {
-    const counter = btn.closest('.counter');
-    const card = btn.closest('.exercise-card');
-    const name = card.dataset.name;
-    const type = counter.dataset.type;
-    const valEl = counter.querySelector('.ctr-val');
-    let val = parseInt(valEl.textContent) + parseInt(btn.dataset.delta);
+  function changeCounter(type, delta) {
+    const id = type === 'reps' ? 'reps-val' : 'sets-val';
+    const el = document.getElementById(id);
+    let val = parseInt(el.textContent) + delta;
     if (val < 1) val = 1;
     if (val > 999) val = 999;
-    valEl.textContent = val;
-    if (type === 'reps') saveReps(name, val);
-    else saveSets(name, val);
+    el.textContent = val;
+    if (selectedExercise) {
+      if (type === 'reps') saveReps(selectedExercise, val);
+      else saveSets(selectedExercise, val);
+    }
   }
 
-  function onRecord(btn) {
-    const card = btn.closest('.exercise-card');
-    const name = card.dataset.name;
-    const ex = exercises.find(e => e.name === name);
+  function onRecord() {
+    if (!selectedExercise) return;
+    const ex = exercises.find(e => e.name === selectedExercise);
     if (!ex) return;
-    const reps = parseInt(card.querySelectorAll('.ctr-val')[0].textContent);
-    const sets = parseInt(card.querySelectorAll('.ctr-val')[1].textContent);
-    const totalReps = reps * sets;
+    const reps = parseInt(document.getElementById('reps-val').textContent);
+    const sets = parseInt(document.getElementById('sets-val').textContent);
+    const memo = document.getElementById('record-memo').value.trim();
     const now = new Date();
     const rec = {
       id: now.getTime(),
@@ -464,26 +770,43 @@
       time: fmtTime(now),
       name: ex.name,
       emoji: ex.emoji,
-      reps, sets, totalReps,
-      memo: ''
+      reps, sets,
+      totalReps: reps * sets,
+      memo
     };
     records.push(rec);
-    sessSets++;
-    sessReps += totalReps;
-    recalcStats();
-    renderSessionSummary();
+    renderStats();
+    renderTodayLog();
+    document.getElementById('record-memo').value = '';
     showToast('✓ ' + ex.emoji + ' ' + ex.name + ' を記録しました');
     postGAS({ action: 'addRecord', ...rec });
   }
 
-  function renderSessionSummary() {
-    const el = document.getElementById('session-summary');
-    el.style.display = sessSets === 0 ? 'none' : '';
-    document.getElementById('sess-sets').textContent = sessSets;
-    document.getElementById('sess-reps').textContent = sessReps;
+  function renderTodayLog() {
+    const today = todayStr();
+    const todayRecs = records.filter(r => r.date === today)
+      .sort((a, b) => b.time.localeCompare(a.time));
+    const section = document.getElementById('today-log-section');
+    const list = document.getElementById('today-log-list');
+    if (!todayRecs.length) { section.style.display = 'none'; return; }
+    section.style.display = '';
+    list.innerHTML = todayRecs.map(r => `
+      <div class="log-item">
+        <div class="log-left">
+          <div class="log-icon">${r.emoji}</div>
+          <div>
+            <div class="log-name">${h(r.name)}</div>
+            <div class="log-time">${r.time}</div>
+          </div>
+        </div>
+        <div class="log-right">
+          <div class="log-total">${r.totalReps}<em>回</em></div>
+          <div class="log-detail">${r.reps}回 × ${r.sets}セット</div>
+        </div>
+      </div>`).join('');
   }
 
-  // ── History ───────────────────────────────────────────────────
+  // ── 履歴画面 ───────────────────────────────────────────────
   function renderHistory() {
     const el = document.getElementById('history-list');
     if (!records.length) {
@@ -497,65 +820,225 @@
     const groups = {};
     sorted.forEach(r => { (groups[r.date] = groups[r.date] || []).push(r); });
 
-    el.innerHTML = Object.keys(groups).map(date => `
-      <div class="history-group">
-        <div class="history-date">${dateLbl(date)}</div>
-        ${groups[date].map(r => histItemHTML(r)).join('')}
-      </div>`).join('');
-
-    el.querySelectorAll('.del-btn').forEach(btn =>
-      btn.addEventListener('click', () => {
-        const id = Number(btn.closest('.history-item').dataset.id);
-        onDeleteRecord(id);
-      })
-    );
+    el.innerHTML = Object.keys(groups).map(date => {
+      const items = groups[date];
+      const [y, m, d] = date.split('-');
+      const dow = ['SUN','MON','TUE','WED','THU','FRI','SAT'][new Date(date).getDay()];
+      const label = m + ' / ' + d + ' ' + dow;
+      return `
+        <div class="history-day">
+          <div class="history-day-head">
+            <div class="history-day-date">${label}</div>
+            <div class="history-day-line"></div>
+            <div class="history-day-badge">${items.length}件</div>
+          </div>
+          ${items.map(r => historyItemHTML(r)).join('')}
+        </div>`;
+    }).join('');
   }
 
-  function histItemHTML(r) {
+  function historyItemHTML(r) {
+    const memoRow = r.memo ? `<div class="history-memo-row">💬 ${h(r.memo)}</div>` : '';
     return `
-      <div class="history-item" data-id="${r.id}">
-        <span class="h-emoji">${r.emoji}</span>
-        <div class="h-info">
-          <div class="h-name">${h(r.name)}</div>
-          <div class="h-detail">${r.reps}回 × ${r.sets}セット = ${r.totalReps}回</div>
+      <div class="history-item">
+        <div class="history-item-top">
+          <div class="history-left">
+            <div class="history-icon">${r.emoji}</div>
+            <div>
+              <div class="history-name">${h(r.name)}</div>
+              <div class="history-meta">${r.time}</div>
+            </div>
+          </div>
+          <div class="history-right">
+            <div class="history-nums">
+              <div class="history-total">${r.totalReps}<em>回</em></div>
+              <div class="history-detail">${r.reps}回 × ${r.sets}セット</div>
+            </div>
+            <div class="history-edit-btn" onclick="openEditModal(${r.id})">✏️</div>
+          </div>
         </div>
-        <div class="h-time">${r.time}</div>
-        <button class="del-btn" title="削除">🗑</button>
+        ${memoRow}
       </div>`;
   }
 
-  function onDeleteRecord(id) {
-    if (!confirm('この記録を削除しますか？')) return;
-    records = records.filter(r => r.id !== id);
-    recalcStats();
+  // ── 編集モーダル ────────────────────────────────────────────
+  function openEditModal(id) {
+    const rec = records.find(r => r.id === id);
+    if (!rec) return;
+    editingRecordId = id;
+    document.getElementById('edit-modal-name').textContent = rec.emoji + ' ' + rec.name;
+    document.getElementById('edit-modal-meta').textContent = rec.date + '  ' + rec.time;
+    document.getElementById('modal-reps-val').textContent = rec.reps;
+    document.getElementById('modal-sets-val').textContent = rec.sets;
+    document.getElementById('modal-memo').value = rec.memo || '';
+    document.getElementById('edit-modal').classList.add('active');
+  }
+
+  function closeEditModal() {
+    editingRecordId = null;
+    document.getElementById('edit-modal').classList.remove('active');
+  }
+
+  function changeModalCounter(type, delta) {
+    const id = type === 'reps' ? 'modal-reps-val' : 'modal-sets-val';
+    const el = document.getElementById(id);
+    let val = parseInt(el.textContent) + delta;
+    if (val < 1) val = 1;
+    if (val > 999) val = 999;
+    el.textContent = val;
+  }
+
+  function onModalSave() {
+    const rec = records.find(r => r.id === editingRecordId);
+    if (!rec) return;
+    rec.reps = parseInt(document.getElementById('modal-reps-val').textContent);
+    rec.sets = parseInt(document.getElementById('modal-sets-val').textContent);
+    rec.totalReps = rec.reps * rec.sets;
+    rec.memo = document.getElementById('modal-memo').value.trim();
+    closeEditModal();
+    renderStats();
     renderHistory();
+    renderTodayLog();
+    postGAS({ action: 'updateRecord', ...rec });
+  }
+
+  function onModalDelete() {
+    if (!confirm('この記録を削除しますか？')) return;
+    const id = editingRecordId;
+    records = records.filter(r => r.id !== id);
+    closeEditModal();
+    renderStats();
+    renderHistory();
+    renderTodayLog();
     postGAS({ action: 'deleteRecord', id });
   }
 
-  // ── Exercises management ──────────────────────────────────────
-  function renderExerciseList() {
-    const el = document.getElementById('exercise-list');
-    el.innerHTML = exercises.map(ex => `
-      <div class="ex-item" data-name="${h(ex.name)}">
-        <span class="drag-handle">☰</span>
-        <span class="ex-emoji">${ex.emoji}</span>
-        <span class="ex-name">${h(ex.name)}</span>
-        <button class="del-btn ex-del" title="削除">🗑</button>
-      </div>`).join('');
+  // ── グラフ画面 ─────────────────────────────────────────────
+  function renderGraph() {
+    if (!exercises.length) {
+      document.getElementById('graph-ex-tabs').innerHTML = '<div class="empty-msg">種目がありません</div>';
+      return;
+    }
+    if (!currentGraphExercise || !exercises.find(e => e.name === currentGraphExercise)) {
+      currentGraphExercise = exercises[0].name;
+    }
+    renderGraphTabs();
+    renderGraphContent();
+  }
 
-    el.querySelectorAll('.ex-del').forEach(btn =>
-      btn.addEventListener('click', () => {
-        const name = btn.closest('.ex-item').dataset.name;
-        onDeleteExercise(name);
-      })
-    );
+  function renderGraphTabs() {
+    document.getElementById('graph-ex-tabs').innerHTML = exercises.map(ex => `
+      <div class="ex-tab ${ex.name === currentGraphExercise ? 'active' : ''}"
+           onclick="selectGraphExercise('${h(ex.name)}')">
+        ${ex.emoji} ${h(ex.name)}
+      </div>`).join('');
+  }
+
+  function selectGraphExercise(name) {
+    currentGraphExercise = name;
+    renderGraphTabs();
+    renderGraphContent();
+  }
+
+  function selectPeriod(el) {
+    document.querySelectorAll('.period-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    currentPeriodDays = parseInt(el.dataset.days);
+    renderGraphContent();
+  }
+
+  function renderGraphContent() {
+    const ex = exercises.find(e => e.name === currentGraphExercise);
+    if (!ex) return;
+    const exRecs = records.filter(r => r.name === currentGraphExercise);
+
+    // 今月の集計
+    const now = new Date();
+    const thisMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    const monthRecs = exRecs.filter(r => r.date.startsWith(thisMonth));
+    const monthTotal = monthRecs.reduce((s, r) => s + r.totalReps, 0);
+    const monthCount = monthRecs.length;
+    const monthDays = new Set(monthRecs.map(r => r.date)).size;
+    const dayAvg = monthDays ? Math.round(monthTotal / monthDays) : 0;
+    let maxRec = exRecs.reduce((best, r) => r.totalReps > (best ? best.totalReps : 0) ? r : best, null);
+
+    document.getElementById('graph-summary').innerHTML = `
+      <div class="summary-card">
+        <div class="summary-lbl">今月の合計</div>
+        <div class="summary-val">${monthTotal}<em>回</em></div>
+        <div class="summary-sub">${h(ex.name)}</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-lbl">今月の記録数</div>
+        <div class="summary-val">${monthCount}<em>回</em></div>
+        <div class="summary-sub">先月比 —</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-lbl">1日平均</div>
+        <div class="summary-val">${dayAvg}<em>回</em></div>
+        <div class="summary-sub">合計 ÷ 記録日数</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-lbl">最高記録</div>
+        <div class="summary-val">${maxRec ? maxRec.totalReps : 0}<em>回</em></div>
+        <div class="summary-sub">${maxRec ? maxRec.date : '—'}</div>
+      </div>`;
+
+    // 棒グラフ
+    const days = [];
+    for (let i = currentPeriodDays - 1; i >= 0; i--) {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      days.push(fmtDate(d));
+    }
+    const dayTotals = {};
+    exRecs.forEach(r => { dayTotals[r.date] = (dayTotals[r.date] || 0) + r.totalReps; });
+    const values = days.map(d => dayTotals[d] || 0);
+    const maxVal = Math.max(...values, 1);
+    const today = todayStr();
+    const chart = document.getElementById('bar-chart');
+    document.getElementById('graph-chart-title').textContent = '日別 合計回数（' + ex.name + '）';
+    chart.innerHTML = '';
+    days.forEach((date, i) => {
+      const v = values[i];
+      const isToday = date === today;
+      const barH = v > 0 ? Math.max((v / maxVal) * 140, 8) : 4;
+      const isMax = v === maxVal && v > 0;
+      let barColor;
+      if (isToday) barColor = '#ff9f40';
+      else if (v === 0) barColor = 'var(--surface2)';
+      else { const a = 0.35 + (v / maxVal) * 0.65; barColor = `rgba(212,245,60,${a})`; }
+      const [, m, d] = date.split('-');
+      const lbl = m + '/' + d;
+      const col = document.createElement('div');
+      col.className = 'bar-col';
+      col.innerHTML = `
+        <div class="bar-v">${isMax && v > 0 ? '★' : (v > 0 ? v : '')}</div>
+        <div class="bar" style="height:${barH}px;background:${barColor};${isMax ? 'box-shadow:0 0 8px rgba(212,245,60,0.5)' : ''}"></div>
+        <div class="bar-lbl">${isToday ? '今日' : lbl}</div>`;
+      chart.appendChild(col);
+    });
+  }
+
+  // ── 種目管理 ────────────────────────────────────────────────
+  function renderExerciseManagement() {
+    const el = document.getElementById('ex-manage-list');
+    if (!exercises.length) {
+      el.innerHTML = '<div class="empty-msg">種目が登録されていません</div>';
+      return;
+    }
+    el.innerHTML = exercises.map(ex => `
+      <div class="ex-manage-item" data-name="${h(ex.name)}">
+        <span class="ex-drag-handle">☰</span>
+        <span class="ex-manage-emoji">${ex.emoji}</span>
+        <span class="ex-manage-name">${h(ex.name)}</span>
+        <button class="ex-delete-btn" onclick="onDeleteExercise('${h(ex.name)}')" title="削除">✕</button>
+      </div>`).join('');
 
     if (window.Sortable) {
       Sortable.create(el, {
-        animation: 150,
-        handle: '.drag-handle',
+        animation: 150, handle: '.ex-drag-handle',
         onEnd() {
-          const newOrder = [...el.querySelectorAll('.ex-item')].map(i => i.dataset.name);
+          const newOrder = [...el.querySelectorAll('.ex-manage-item')].map(i => i.dataset.name);
           exercises = newOrder.map(n => exercises.find(e => e.name === n)).filter(Boolean);
           renderExerciseGrid();
           postGAS({ action: 'reorderExercises', exercises });
@@ -572,9 +1055,8 @@
     if (!name) { nameEl.focus(); return; }
     if (exercises.find(e => e.name === name)) { showToast('同じ種目名がすでに存在します'); return; }
     exercises.push({ name, emoji });
-    nameEl.value = '';
-    emojiEl.value = '';
-    renderExerciseList();
+    nameEl.value = ''; emojiEl.value = '';
+    renderExerciseManagement();
     renderExerciseGrid();
     postGAS({ action: 'addExercise', name, emoji });
   }
@@ -582,72 +1064,60 @@
   function onDeleteExercise(name) {
     if (!confirm('「' + name + '」を削除しますか？')) return;
     exercises = exercises.filter(e => e.name !== name);
-    renderExerciseList();
+    if (selectedExercise === name) {
+      selectedExercise = null;
+      document.getElementById('input-area').style.display = 'none';
+    }
+    renderExerciseManagement();
     renderExerciseGrid();
     postGAS({ action: 'deleteExercise', name });
   }
 
-  document.getElementById('btn-add-exercise').addEventListener('click', onAddExercise);
-  document.getElementById('inp-name').addEventListener('keydown', e => { if (e.key === 'Enter') onAddExercise(); });
-
-  // ── GAS POST ──────────────────────────────────────────────────
+  // ── GAS POST ──────────────────────────────────────────────
   function postGAS(data) {
     fetch(GAS_URL, {
-      method: 'POST',
-      mode: 'no-cors',
+      method: 'POST', mode: 'no-cors',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
-    }).catch(err => console.warn('POST failed:', err));
+    }).catch(() => {});
   }
 
-  // ── Utilities ─────────────────────────────────────────────────
-  function todayStr() {
-    const d = new Date();
-    return fmtDate(d);
-  }
+  // ── localStorage ──────────────────────────────────────────
+  function getReps(name) { return JSON.parse(localStorage.getItem('wl_reps') || '{}')[name] ?? 10; }
+  function getSets(name) { return JSON.parse(localStorage.getItem('wl_sets') || '{}')[name] ?? 3; }
+  function saveReps(name, v) { const d = JSON.parse(localStorage.getItem('wl_reps') || '{}'); d[name] = v; localStorage.setItem('wl_reps', JSON.stringify(d)); }
+  function saveSets(name, v) { const d = JSON.parse(localStorage.getItem('wl_sets') || '{}'); d[name] = v; localStorage.setItem('wl_sets', JSON.stringify(d)); }
 
+  // ── ユーティリティ ────────────────────────────────────────
+  function todayStr() { return fmtDate(new Date()); }
   function fmtDate(d) {
-    return d.getFullYear() + '-' +
-      String(d.getMonth() + 1).padStart(2, '0') + '-' +
-      String(d.getDate()).padStart(2, '0');
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
   }
-
   function fmtTime(d) {
-    return String(d.getHours()).padStart(2, '0') + ':' +
-      String(d.getMinutes()).padStart(2, '0');
+    return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
   }
-
-  function dateLbl(dateStr) {
-    const today = todayStr();
-    const yesterday = fmtDate(new Date(Date.now() - 86400000));
-    if (dateStr === today) return '今日  ' + dateStr;
-    if (dateStr === yesterday) return '昨日  ' + dateStr;
-    return dateStr;
-  }
-
   function h(str) {
-    return String(str)
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   }
-
   let toastTimer = null;
   function showToast(msg) {
     const el = document.getElementById('toast');
-    el.textContent = msg;
-    el.classList.add('show');
+    el.textContent = msg; el.classList.add('show');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
   }
 
-  // ── Service Worker ────────────────────────────────────────────
+  // ── Enter キーで種目追加 ──────────────────────────────────
+  document.getElementById('inp-name').addEventListener('keydown', e => {
+    if (e.key === 'Enter') onAddExercise();
+  });
+
+  // ── Service Worker ────────────────────────────────────────
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/workoutlog/sw.js');
   }
 
-  // ── Init ──────────────────────────────────────────────────────
-  loadData();
+  init();
 </script>
 </body>
 </html>
