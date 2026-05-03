@@ -1109,7 +1109,7 @@
 
   // ── Enter キーで種目追加 ──────────────────────────────────
   document.getElementById('inp-name').addEventListener('keydown', e => {
-    if (e.key === 'Enter') onAddExercise();
+    if (e.key === 'Enter' && !e.isComposing) onAddExercise();
   });
 
   // ── Service Worker ────────────────────────────────────────
