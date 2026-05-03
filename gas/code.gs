@@ -53,10 +53,14 @@ function getData() {
     const dateStr = (typeof rawDate.getTime === 'function')
       ? Utilities.formatDate(rawDate, 'Asia/Tokyo', 'yyyy-MM-dd')
       : String(rawDate);
+    const rawTime = recData[i][2];
+    const timeStr = (typeof rawTime.getTime === 'function')
+      ? Utilities.formatDate(rawTime, 'Asia/Tokyo', 'HH:mm')
+      : String(rawTime);
     records.push({
       id: Number(recData[i][0]),
       date: dateStr,
-      time: String(recData[i][2] || ''),
+      time: timeStr,
       name: String(recData[i][3] || ''),
       emoji: String(recData[i][4] || ''),
       reps: Number(recData[i][5] || 0),
