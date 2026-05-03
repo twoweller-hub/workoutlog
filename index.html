@@ -718,6 +718,8 @@
     document.querySelectorAll('.nav-item').forEach(n =>
       n.classList.toggle('active', n.dataset.page === name)
     );
+    const showStats = name === 'record' || name === 'history';
+    document.querySelector('.stats-row').style.display = showStats ? '' : 'none';
     if (name === 'history') renderHistory();
     if (name === 'graph') renderGraph();
     if (name === 'exercises') renderExerciseManagement();
