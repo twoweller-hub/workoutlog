@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workout Log</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#0f0f0f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="WorkoutLog">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
+  <style>
+    :root {
+      --bg: #0f0f0f;
+      --card: #1a1a1a;
+      --border: #2a2a2a;
+      --text: #e8e8e8;
+      --muted: #888;
+      --accent: #d4f53c;
+      --accent-dim: rgba(212, 245, 60, 0.08);
+      --danger: #ff5555;
+      --nav-h: 64px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Noto Sans JP', sans-serif; }
+    button { font-family: inherit; }
+
+    /* ── Layout ───────────────────────────────── */
+    .app-wrapper { display: flex; min-height: 100%; }
+    .sidebar-nav { display: none; }
+    .main-content { flex: 1; min-width: 0; padding-bottom: var(--nav-h); }
+    .page { display: none; padding: 20px 16px 32px; }
+    .page.active { display: block; }
+
+    /* ── Bottom nav ──────────────────────────── */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      height: var(--nav-h); background: var(--card);
+      border-top: 1px solid var(--border);
+      display: flex; z-index: 100;
+    }
+    .nav-item {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 3px;
+      background: none; border: none; cursor: pointer;
+      color: var(--muted); font-size: 11px; padding: 8px;
+      transition: color 0.15s;
+    }
+    .nav-item.active { color: var(--accent); }
+    .nav-item .nav-icon { font-size: 22px; line-height: 1; }
+
+    /* ── Page header ─────────────────────────── */
+    .page-title {
+      font-family: 'Bebas Neue', sans-serif; font-size: 26px;
+      letter-spacing: 2px; color: var(--accent); margin-bottom: 18px;
+    }
+
+    /* ── Stats bar ───────────────────────────── */
+    .stats-bar { display: flex; gap: 8px; margin-bottom: 20px; }
+    .stat-card {
+      flex: 1; background: var(--card); border: 1px solid var(--border);
+      border-radius: 10px; padding: 12px 6px; text-align: center;
+    }
+    .stat-value { font-size: 26px; font-weight: 700; color: var(--accent); line-height: 1; }
+    .stat-label { font-size: 10px; color: var(--muted); margin-top: 4px; }
+
+    /* ── Exercise grid ───────────────────────── */
+    .exercise-grid { display: flex; flex-direction: column; gap: 10px; }
+    .exercise-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 16px;
+    }
+    .card-top { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+    .card-emoji { font-size: 32px; line-height: 1; }
+    .card-name { font-size: 16px; font-weight: 500; }
+    .card-controls { display: flex; gap: 10px; }
+    .ctrl-group { flex: 1; }
+    .ctrl-label { font-size: 11px; color: var(--muted); margin-bottom: 5px; }
+    .counter {
+      display: flex; align-items: center;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 8px; overflow: hidden; height: 38px;
+    }
+    .ctr-btn {
+      width: 38px; height: 38px; border: none; background: none;
+      color: var(--text); font-size: 22px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: background 0.1s;
+    }
+    .ctr-btn:active { background: var(--border); }
+    .ctr-val { flex: 1; text-align: center; font-size: 18px; font-weight: 700; }
+    .record-btn {
+      width: 100%; margin-top: 14px; padding: 11px;
+      background: var(--accent); color: #111;
+      border: none; border-radius: 8px;
+      font-size: 14px; font-weight: 700; cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .record-btn:active { opacity: 0.75; }
+
+    /* ── Session summary ─────────────────────── */
+    .session-summary {
+      margin-top: 20px; padding: 14px 16px;
+      background: var(--card); border: 1px solid var(--accent);
+      border-radius: 10px; font-size: 14px; color: var(--muted);
+    }
+    .session-summary strong { color: var(--accent); }
+
+    /* ── History ─────────────────────────────── */
+    .history-group { margin-bottom: 24px; }
+    .history-date {
+      font-size: 12px; color: var(--muted); padding-bottom: 8px;
+      border-bottom: 1px solid var(--border); margin-bottom: 2px;
+    }
+    .history-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 0; border-bottom: 1px solid var(--border);
+    }
+    .history-item:last-child { border-bottom: none; }
+    .h-emoji { font-size: 24px; flex-shrink: 0; }
+    .h-info { flex: 1; min-width: 0; }
+    .h-name { font-size: 14px; font-weight: 500; }
+    .h-detail { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .h-time { font-size: 11px; color: var(--muted); flex-shrink: 0; }
+    .del-btn {
+      background: none; border: none; color: var(--muted);
+      font-size: 18px; cursor: pointer; padding: 4px 8px;
+      flex-shrink: 0; transition: color 0.15s;
+    }
+    .del-btn:active { color: var(--danger); }
+
+    /* ── Exercises management ────────────────── */
+    .add-form {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 16px; margin-bottom: 20px;
+    }
+    .form-row { display: flex; gap: 8px; align-items: flex-end; }
+    .f-group { display: flex; flex-direction: column; gap: 5px; }
+    .f-label { font-size: 11px; color: var(--muted); }
+    .f-input {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 8px; padding: 10px 12px;
+      color: var(--text); font-size: 14px; font-family: inherit;
+      outline: none; width: 100%;
+    }
+    .f-input:focus { border-color: var(--accent); }
+    .emoji-inp { width: 60px; text-align: center; font-size: 20px; }
+    .add-btn {
+      padding: 10px 18px; background: var(--accent); color: #111;
+      border: none; border-radius: 8px; font-size: 14px; font-weight: 700;
+      cursor: pointer; white-space: nowrap; flex-shrink: 0;
+    }
+    .add-btn:active { opacity: 0.8; }
+    .ex-list { display: flex; flex-direction: column; }
+    .ex-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 14px 0; border-bottom: 1px solid var(--border);
+      cursor: default;
+    }
+    .ex-item:last-child { border-bottom: none; }
+    .drag-handle { color: var(--muted); cursor: grab; font-size: 18px; padding: 4px 2px; }
+    .ex-emoji { font-size: 24px; }
+    .ex-name { flex: 1; font-size: 14px; }
+
+    /* ── Toast ───────────────────────────────── */
+    .toast {
+      position: fixed; bottom: calc(var(--nav-h) + 12px); left: 50%;
+      transform: translateX(-50%);
+      background: var(--accent); color: #111;
+      padding: 10px 20px; border-radius: 20px;
+      font-size: 13px; font-weight: 700;
+      z-index: 200; opacity: 0; transition: opacity 0.2s;
+      pointer-events: none; white-space: nowrap;
+    }
+    .toast.show { opacity: 1; }
+
+    /* ── Misc ────────────────────────────────── */
+    .empty-msg { text-align: center; color: var(--muted); padding: 48px 0; font-size: 14px; }
+    .loading-msg { text-align: center; color: var(--muted); padding: 48px 0; font-size: 14px; }
+
+    /* ── Desktop (640px+) ────────────────────── */
+    @media (min-width: 640px) {
+      body { overflow: hidden; display: flex; justify-content: center; }
+      .app-wrapper {
+        max-width: 960px; width: 100%; height: 100vh;
+        display: flex; align-items: stretch; overflow: hidden;
+      }
+      .sidebar-nav {
+        display: flex; flex-direction: column; width: 200px; flex-shrink: 0;
+        height: 100vh; background: var(--bg); border-right: 1px solid var(--border);
+      }
+      .sidebar-logo {
+        font-family: 'Bebas Neue', sans-serif; font-size: 21px;
+        letter-spacing: 3px; color: var(--accent); line-height: 1.15;
+        padding: 24px 20px 22px; border-bottom: 1px solid var(--border);
+        margin-bottom: 8px;
+      }
+      .sidebar-nav .nav-item {
+        flex-direction: row; justify-content: flex-start;
+        padding: 14px 20px; gap: 12px; font-size: 14px;
+        border-left: 3px solid transparent;
+      }
+      .sidebar-nav .nav-item.active {
+        border-left-color: var(--accent);
+        background: var(--accent-dim);
+        color: var(--accent);
+      }
+      .sidebar-nav .nav-item .nav-icon { font-size: 20px; }
+      .main-content { flex: 1; min-width: 0; height: 100vh; overflow-y: auto; padding-bottom: 0; }
+      .page { padding: 28px 32px 48px; }
+      .bottom-nav { display: none; }
+      .exercise-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      .toast { bottom: 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-wrapper">
+
+  <!-- Sidebar (desktop only) -->
+  <nav class="sidebar-nav">
+    <div class="sidebar-logo">WORKOUT<br>LOG</div>
+    <button class="nav-item active" data-page="record">
+      <span class="nav-icon">🏋️</span>記録
+    </button>
+    <button class="nav-item" data-page="history">
+      <span class="nav-icon">📋</span>履歴
+    </button>
+    <button class="nav-item" data-page="exercises">
+      <span class="nav-icon">⚙️</span>種目
+    </button>
+  </nav>
+
+  <main class="main-content">
+
+    <!-- ── Record page ── -->
+    <section id="page-record" class="page active">
+      <div class="page-title">RECORD</div>
+
+      <div class="stats-bar">
+        <div class="stat-card">
+          <div class="stat-value" id="stat-today">—</div>
+          <div class="stat-label">今日</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-total">—</div>
+          <div class="stat-label">通算</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-streak">—</div>
+          <div class="stat-label">連続日数</div>
+        </div>
+      </div>
+
+      <div id="exercise-grid" class="exercise-grid">
+        <div class="loading-msg">読み込み中…</div>
+      </div>
+
+      <div id="session-summary" class="session-summary" style="display:none">
+        今回: <strong id="sess-sets">0</strong> セット ／ 合計 <strong id="sess-reps">0</strong> 回
+      </div>
+    </section>
+
+    <!-- ── History page ── -->
+    <section id="page-history" class="page">
+      <div class="page-title">HISTORY</div>
+      <div id="history-list"></div>
+    </section>
+
+    <!-- ── Exercises page ── -->
+    <section id="page-exercises" class="page">
+      <div class="page-title">EXERCISES</div>
+      <div class="add-form">
+        <div class="form-row">
+          <div class="f-group">
+            <div class="f-label">絵文字</div>
+            <input type="text" id="inp-emoji" class="f-input emoji-inp" placeholder="💪" maxlength="2">
+          </div>
+          <div class="f-group" style="flex:1">
+            <div class="f-label">種目名</div>
+            <input type="text" id="inp-name" class="f-input" placeholder="例：スクワット">
+          </div>
+          <button class="add-btn" id="btn-add-exercise">追加</button>
+        </div>
+      </div>
+      <div id="exercise-list" class="ex-list"></div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Bottom nav (mobile only) -->
+<nav class="bottom-nav">
+  <button class="nav-item active" data-page="record">
+    <span class="nav-icon">🏋️</span>記録
+  </button>
+  <button class="nav-item" data-page="history">
+    <span class="nav-icon">📋</span>履歴
+  </button>
+  <button class="nav-item" data-page="exercises">
+    <span class="nav-icon">⚙️</span>種目
+  </button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const GAS_URL = 'YOUR_GAS_URL';
+
+  let exercises = [];
+  let records = [];
+  let stats = { todayCount: 0, totalCount: 0, streak: 0 };
+  let sessSets = 0;
+  let sessReps = 0;
+
+  // ── Navigation ────────────────────────────────────────────────
+  function switchPage(name) {
+    document.querySelectorAll('.page').forEach(p =>
+      p.classList.toggle('active', p.id === 'page-' + name)
+    );
+    document.querySelectorAll('.nav-item').forEach(n =>
+      n.classList.toggle('active', n.dataset.page === name)
+    );
+    if (name === 'history') renderHistory();
+    if (name === 'exercises') renderExerciseList();
+  }
+
+  document.querySelectorAll('.nav-item').forEach(btn =>
+    btn.addEventListener('click', () => switchPage(btn.dataset.page))
+  );
+
+  // ── localStorage helpers ──────────────────────────────────────
+  function getReps(name) { return (JSON.parse(localStorage.getItem('wl_reps') || '{}')[name]) ?? 10; }
+  function getSets(name) { return (JSON.parse(localStorage.getItem('wl_sets') || '{}')[name]) ?? 3; }
+  function saveReps(name, v) { const d = JSON.parse(localStorage.getItem('wl_reps') || '{}'); d[name] = v; localStorage.setItem('wl_reps', JSON.stringify(d)); }
+  function saveSets(name, v) { const d = JSON.parse(localStorage.getItem('wl_sets') || '{}'); d[name] = v; localStorage.setItem('wl_sets', JSON.stringify(d)); }
+
+  // ── Load from GAS (JSONP) ─────────────────────────────────────
+  function loadData() {
+    const cb = 'cb_' + Date.now();
+    const s = document.createElement('script');
+    window[cb] = function(data) {
+      delete window[cb];
+      s.remove();
+      if (data.error) { console.error(data.error); renderError(); return; }
+      exercises = data.exercises || [];
+      records = data.records || [];
+      stats = data.stats || { todayCount: 0, totalCount: 0, streak: 0 };
+      renderStats();
+      renderExerciseGrid();
+    };
+    s.onerror = () => { delete window[cb]; s.remove(); renderError(); };
+    s.src = GAS_URL + '?callback=' + cb;
+    document.head.appendChild(s);
+  }
+
+  function renderError() {
+    document.getElementById('exercise-grid').innerHTML =
+      '<div class="empty-msg">データの読み込みに失敗しました</div>';
+  }
+
+  // ── Stats ─────────────────────────────────────────────────────
+  function recalcStats() {
+    const today = todayStr();
+    stats.todayCount = records.filter(r => r.date === today).length;
+    stats.totalCount = records.length;
+    const dateSet = new Set(records.map(r => r.date));
+    let streak = 0;
+    const d = new Date();
+    if (!dateSet.has(today)) d.setDate(d.getDate() - 1);
+    for (let i = 0; i < 3650; i++) {
+      if (!dateSet.has(fmtDate(d))) break;
+      streak++;
+      d.setDate(d.getDate() - 1);
+    }
+    stats.streak = streak;
+    renderStats();
+  }
+
+  function renderStats() {
+    document.getElementById('stat-today').textContent = stats.todayCount;
+    document.getElementById('stat-total').textContent = stats.totalCount;
+    document.getElementById('stat-streak').textContent = stats.streak;
+  }
+
+  // ── Exercise grid ─────────────────────────────────────────────
+  function renderExerciseGrid() {
+    const grid = document.getElementById('exercise-grid');
+    if (!exercises.length) {
+      grid.innerHTML = '<div class="empty-msg">「種目」タブから種目を追加してください</div>';
+      return;
+    }
+    grid.innerHTML = exercises.map(ex => cardHTML(ex)).join('');
+    grid.querySelectorAll('.ctr-btn').forEach(btn =>
+      btn.addEventListener('click', () => onCounterBtn(btn))
+    );
+    grid.querySelectorAll('.record-btn').forEach(btn =>
+      btn.addEventListener('click', () => onRecord(btn))
+    );
+  }
+
+  function cardHTML(ex) {
+    const reps = getReps(ex.name);
+    const sets = getSets(ex.name);
+    return `
+      <div class="exercise-card" data-name="${h(ex.name)}">
+        <div class="card-top">
+          <span class="card-emoji">${ex.emoji}</span>
+          <span class="card-name">${h(ex.name)}</span>
+        </div>
+        <div class="card-controls">
+          <div class="ctrl-group">
+            <div class="ctrl-label">回数</div>
+            <div class="counter" data-type="reps">
+              <button class="ctr-btn" data-delta="-1">−</button>
+              <span class="ctr-val">${reps}</span>
+              <button class="ctr-btn" data-delta="1">＋</button>
+            </div>
+          </div>
+          <div class="ctrl-group">
+            <div class="ctrl-label">セット数</div>
+            <div class="counter" data-type="sets">
+              <button class="ctr-btn" data-delta="-1">−</button>
+              <span class="ctr-val">${sets}</span>
+              <button class="ctr-btn" data-delta="1">＋</button>
+            </div>
+          </div>
+        </div>
+        <button class="record-btn">記録する</button>
+      </div>`;
+  }
+
+  function onCounterBtn(btn) {
+    const counter = btn.closest('.counter');
+    const card = btn.closest('.exercise-card');
+    const name = card.dataset.name;
+    const type = counter.dataset.type;
+    const valEl = counter.querySelector('.ctr-val');
+    let val = parseInt(valEl.textContent) + parseInt(btn.dataset.delta);
+    if (val < 1) val = 1;
+    if (val > 999) val = 999;
+    valEl.textContent = val;
+    if (type === 'reps') saveReps(name, val);
+    else saveSets(name, val);
+  }
+
+  function onRecord(btn) {
+    const card = btn.closest('.exercise-card');
+    const name = card.dataset.name;
+    const ex = exercises.find(e => e.name === name);
+    if (!ex) return;
+    const reps = parseInt(card.querySelectorAll('.ctr-val')[0].textContent);
+    const sets = parseInt(card.querySelectorAll('.ctr-val')[1].textContent);
+    const totalReps = reps * sets;
+    const now = new Date();
+    const rec = {
+      id: now.getTime(),
+      date: todayStr(),
+      time: fmtTime(now),
+      name: ex.name,
+      emoji: ex.emoji,
+      reps, sets, totalReps,
+      memo: ''
+    };
+    records.push(rec);
+    sessSets++;
+    sessReps += totalReps;
+    recalcStats();
+    renderSessionSummary();
+    showToast('✓ ' + ex.emoji + ' ' + ex.name + ' を記録しました');
+    postGAS({ action: 'addRecord', ...rec });
+  }
+
+  function renderSessionSummary() {
+    const el = document.getElementById('session-summary');
+    el.style.display = sessSets === 0 ? 'none' : '';
+    document.getElementById('sess-sets').textContent = sessSets;
+    document.getElementById('sess-reps').textContent = sessReps;
+  }
+
+  // ── History ───────────────────────────────────────────────────
+  function renderHistory() {
+    const el = document.getElementById('history-list');
+    if (!records.length) {
+      el.innerHTML = '<div class="empty-msg">記録がありません</div>';
+      return;
+    }
+    const sorted = [...records].sort((a, b) => {
+      if (a.date !== b.date) return b.date.localeCompare(a.date);
+      return b.time.localeCompare(a.time);
+    });
+    const groups = {};
+    sorted.forEach(r => { (groups[r.date] = groups[r.date] || []).push(r); });
+
+    el.innerHTML = Object.keys(groups).map(date => `
+      <div class="history-group">
+        <div class="history-date">${dateLbl(date)}</div>
+        ${groups[date].map(r => histItemHTML(r)).join('')}
+      </div>`).join('');
+
+    el.querySelectorAll('.del-btn').forEach(btn =>
+      btn.addEventListener('click', () => {
+        const id = Number(btn.closest('.history-item').dataset.id);
+        onDeleteRecord(id);
+      })
+    );
+  }
+
+  function histItemHTML(r) {
+    return `
+      <div class="history-item" data-id="${r.id}">
+        <span class="h-emoji">${r.emoji}</span>
+        <div class="h-info">
+          <div class="h-name">${h(r.name)}</div>
+          <div class="h-detail">${r.reps}回 × ${r.sets}セット = ${r.totalReps}回</div>
+        </div>
+        <div class="h-time">${r.time}</div>
+        <button class="del-btn" title="削除">🗑</button>
+      </div>`;
+  }
+
+  function onDeleteRecord(id) {
+    if (!confirm('この記録を削除しますか？')) return;
+    records = records.filter(r => r.id !== id);
+    recalcStats();
+    renderHistory();
+    postGAS({ action: 'deleteRecord', id });
+  }
+
+  // ── Exercises management ──────────────────────────────────────
+  function renderExerciseList() {
+    const el = document.getElementById('exercise-list');
+    el.innerHTML = exercises.map(ex => `
+      <div class="ex-item" data-name="${h(ex.name)}">
+        <span class="drag-handle">☰</span>
+        <span class="ex-emoji">${ex.emoji}</span>
+        <span class="ex-name">${h(ex.name)}</span>
+        <button class="del-btn ex-del" title="削除">🗑</button>
+      </div>`).join('');
+
+    el.querySelectorAll('.ex-del').forEach(btn =>
+      btn.addEventListener('click', () => {
+        const name = btn.closest('.ex-item').dataset.name;
+        onDeleteExercise(name);
+      })
+    );
+
+    if (window.Sortable) {
+      Sortable.create(el, {
+        animation: 150,
+        handle: '.drag-handle',
+        onEnd() {
+          const newOrder = [...el.querySelectorAll('.ex-item')].map(i => i.dataset.name);
+          exercises = newOrder.map(n => exercises.find(e => e.name === n)).filter(Boolean);
+          renderExerciseGrid();
+          postGAS({ action: 'reorderExercises', exercises });
+        }
+      });
+    }
+  }
+
+  function onAddExercise() {
+    const nameEl = document.getElementById('inp-name');
+    const emojiEl = document.getElementById('inp-emoji');
+    const name = nameEl.value.trim();
+    const emoji = emojiEl.value.trim() || '💪';
+    if (!name) { nameEl.focus(); return; }
+    if (exercises.find(e => e.name === name)) { showToast('同じ種目名がすでに存在します'); return; }
+    exercises.push({ name, emoji });
+    nameEl.value = '';
+    emojiEl.value = '';
+    renderExerciseList();
+    renderExerciseGrid();
+    postGAS({ action: 'addExercise', name, emoji });
+  }
+
+  function onDeleteExercise(name) {
+    if (!confirm('「' + name + '」を削除しますか？')) return;
+    exercises = exercises.filter(e => e.name !== name);
+    renderExerciseList();
+    renderExerciseGrid();
+    postGAS({ action: 'deleteExercise', name });
+  }
+
+  document.getElementById('btn-add-exercise').addEventListener('click', onAddExercise);
+  document.getElementById('inp-name').addEventListener('keydown', e => { if (e.key === 'Enter') onAddExercise(); });
+
+  // ── GAS POST ──────────────────────────────────────────────────
+  function postGAS(data) {
+    fetch(GAS_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    }).catch(err => console.warn('POST failed:', err));
+  }
+
+  // ── Utilities ─────────────────────────────────────────────────
+  function todayStr() {
+    const d = new Date();
+    return fmtDate(d);
+  }
+
+  function fmtDate(d) {
+    return d.getFullYear() + '-' +
+      String(d.getMonth() + 1).padStart(2, '0') + '-' +
+      String(d.getDate()).padStart(2, '0');
+  }
+
+  function fmtTime(d) {
+    return String(d.getHours()).padStart(2, '0') + ':' +
+      String(d.getMinutes()).padStart(2, '0');
+  }
+
+  function dateLbl(dateStr) {
+    const today = todayStr();
+    const yesterday = fmtDate(new Date(Date.now() - 86400000));
+    if (dateStr === today) return '今日  ' + dateStr;
+    if (dateStr === yesterday) return '昨日  ' + dateStr;
+    return dateStr;
+  }
+
+  function h(str) {
+    return String(str)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  let toastTimer = null;
+  function showToast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+  }
+
+  // ── Service Worker ────────────────────────────────────────────
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/workoutlog/sw.js');
+  }
+
+  // ── Init ──────────────────────────────────────────────────────
+  loadData();
+</script>
+</body>
+</html>

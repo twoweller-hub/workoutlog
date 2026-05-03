@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WORKOUT LOG – UI Mock</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --bg: #111318;
+    --surface: #1c1f2a;
+    --surface2: #272b38;
+    --accent: #d4f53c;
+    --accent-dim: rgba(212,245,60,0.12);
+    --text: #eef0f4;
+    --text-sub: #9ba3b5;
+    --text-muted: #6e7789;
+    --border: #2e3244;
+    --danger: #ff4d3a;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif;
+    min-height: 100vh;
+  }
+
+  /* mock badge */
+  .mock-badge {
+    position: fixed; top: 8px; right: 8px;
+    background: var(--danger); color: #fff;
+    font-size: 9px; font-weight: 700; letter-spacing: 1px;
+    padding: 3px 8px; border-radius: 4px; z-index: 999;
+  }
+
+  /* ===== アプリラッパー ===== */
+  .app-wrapper {
+    max-width: 390px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  /* ===== サイドバー（モバイルでは非表示） ===== */
+  .sidebar-nav { display: none; }
+
+  /* ===== ボトムナビ（モバイル） ===== */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 390px;
+    background: rgba(17,19,24,0.96);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: space-around;
+    padding: 10px 0 24px;
+    z-index: 100;
+  }
+  .nav-item {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    cursor: pointer; padding: 4px 24px;
+    transition: all 0.15s;
+  }
+  .nav-icon { font-size: 22px; opacity: 0.35; transition: all 0.2s; }
+  .nav-label { font-size: 10px; color: var(--text-muted); letter-spacing: 0.5px; transition: color 0.2s; }
+  .nav-item.active .nav-icon { opacity: 1; }
+  .nav-item.active .nav-label { color: var(--accent); }
+
+  /* ===== 共通ヘッダー ===== */
+  .header {
+    padding: 20px 20px 14px;
+    position: sticky; top: 0;
+    background: rgba(17,19,24,0.94);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    z-index: 50;
+  }
+  .header-row { display: flex; align-items: flex-end; justify-content: space-between; }
+  .app-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 30px; letter-spacing: 3px; color: var(--accent); line-height: 1;
+  }
+  .date-label { font-size: 12px; color: var(--text-sub); padding-bottom: 2px; }
+
+  .stats-row {
+    display: flex; gap: 0; margin-top: 14px;
+    border: 1px solid var(--border); border-radius: 10px; overflow: hidden;
+  }
+  .stat-cell {
+    flex: 1; padding: 10px 12px; text-align: center;
+    border-right: 1px solid var(--border);
+  }
+  .stat-cell:last-child { border-right: none; }
+  .stat-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px; color: var(--text); line-height: 1;
+  }
+  .stat-num em { font-family: 'Noto Sans JP', sans-serif; font-size: 11px; color: var(--text-sub); font-style: normal; }
+  .stat-label { font-size: 10px; color: var(--text-sub); margin-top: 2px; }
+
+  /* ===== ページ ===== */
+  .page { display: none; padding: 20px; padding-bottom: 90px; }
+  .page.active { display: block; }
+
+  .section-label {
+    font-size: 10px; letter-spacing: 2px; color: var(--text-sub);
+    text-transform: uppercase; margin-bottom: 10px;
+  }
+
+  /* ===== 記録画面 ===== */
+  .exercise-grid {
+    display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;
+  }
+  .exercise-btn {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex; align-items: center; gap: 14px;
+    cursor: pointer; transition: all 0.15s;
+    position: relative;
+  }
+  .exercise-btn.active {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+  }
+  .exercise-check {
+    position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+    width: 22px; height: 22px; border-radius: 50%;
+    border: 1.5px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; color: transparent;
+    transition: all 0.15s;
+  }
+  .exercise-btn.active .exercise-check {
+    background: var(--accent); border-color: var(--accent);
+    color: #111; font-weight: 900;
+  }
+  .exercise-icon { font-size: 26px; width: 36px; text-align: center; flex-shrink: 0; }
+  .exercise-name { font-size: 15px; font-weight: 700; color: var(--text); }
+  .exercise-name-en { font-size: 11px; color: var(--text-sub); margin-top: 1px; }
+
+  .add-exercise-btn {
+    background: transparent;
+    border: 1.5px dashed var(--border);
+    border-radius: 12px;
+    padding: 13px 16px;
+    display: flex; align-items: center; gap: 14px;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .add-exercise-icon {
+    width: 36px; height: 36px; border-radius: 50%;
+    border: 1.5px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; color: var(--text-sub); flex-shrink: 0;
+  }
+  .add-exercise-label { font-size: 13px; color: var(--text-sub); }
+
+  .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .input-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+  }
+  .input-card-label { font-size: 10px; color: var(--text-sub); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; }
+  .counter { display: flex; align-items: center; justify-content: space-between; }
+  .counter-btn {
+    width: 34px; height: 34px; border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: var(--surface2);
+    color: var(--text); font-size: 20px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-weight: 300; line-height: 1;
+    transition: all 0.1s;
+  }
+  .counter-btn.plus { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+  .counter-val {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 38px; color: var(--text); line-height: 1; min-width: 40px; text-align: center;
+  }
+
+  .memo-wrap { margin-bottom: 20px; }
+  .memo-input {
+    width: 100%; background: var(--surface);
+    border: 1.5px solid var(--border); border-radius: 12px;
+    padding: 12px 14px; color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif; font-size: 14px;
+    resize: none; outline: none; line-height: 1.6;
+  }
+  .memo-input::placeholder { color: var(--text-muted); }
+
+  .record-btn {
+    width: 100%; padding: 18px;
+    background: var(--accent); color: #111;
+    border: none; border-radius: 12px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px; letter-spacing: 4px;
+    cursor: pointer; margin-bottom: 24px;
+    transition: opacity 0.15s;
+  }
+
+  .log-list { display: flex; flex-direction: column; gap: 8px; }
+  .log-item {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 14px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .log-left { display: flex; align-items: center; gap: 10px; }
+  .log-icon {
+    width: 38px; height: 38px; border-radius: 8px;
+    background: var(--surface2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0;
+  }
+  .log-name { font-size: 14px; font-weight: 700; }
+  .log-time { font-size: 11px; color: var(--text-sub); margin-top: 2px; }
+  .log-right { text-align: right; }
+  .log-total {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px; color: var(--accent); line-height: 1;
+  }
+  .log-total em { font-family: 'Noto Sans JP', sans-serif; font-size: 11px; color: var(--text-sub); font-style: normal; }
+  .log-detail { font-size: 11px; color: var(--text-sub); margin-top: 1px; }
+
+  /* ===== 履歴画面 ===== */
+  .history-day { margin-bottom: 22px; }
+  .history-day-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .history-day-date {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 14px; letter-spacing: 1px; color: var(--text-sub); white-space: nowrap;
+  }
+  .history-day-line { flex: 1; height: 1px; background: var(--border); }
+  .history-day-badge {
+    font-size: 10px; color: var(--text-sub);
+    background: var(--surface2); padding: 2px 8px; border-radius: 10px;
+  }
+  .history-item {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 14px;
+    display: flex; flex-direction: column; gap: 8px; margin-bottom: 6px;
+  }
+  .history-item-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+  .history-left { display: flex; align-items: center; gap: 10px; flex: 1; }
+  .history-icon {
+    width: 38px; height: 38px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; flex-shrink: 0;
+  }
+  .history-name { font-size: 14px; font-weight: 700; }
+  .history-meta { font-size: 11px; color: var(--text-sub); margin-top: 2px; }
+  .history-right { display: flex; align-items: flex-start; gap: 8px; flex-shrink: 0; }
+  .history-nums { text-align: right; }
+  .history-total {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px; color: var(--accent); line-height: 1;
+  }
+  .history-total em { font-family: 'Noto Sans JP', sans-serif; font-size: 11px; color: var(--text-sub); font-style: normal; }
+  .history-detail { font-size: 11px; color: var(--text-sub); }
+  .history-edit-btn {
+    width: 30px; height: 30px; border-radius: 7px;
+    border: 1px solid var(--border); background: var(--surface2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; cursor: pointer; flex-shrink: 0; margin-top: 1px;
+  }
+  .history-memo-row {
+    font-size: 11px; color: var(--text-sub);
+    background: var(--surface2); border-radius: 6px;
+    padding: 6px 10px; line-height: 1.5; word-break: break-all;
+  }
+
+  /* ===== グラフ画面 ===== */
+  .exercise-tabs { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+  .ex-tab {
+    padding: 6px 14px; border-radius: 20px;
+    border: 1.5px solid var(--border);
+    font-size: 12px; font-weight: 700; color: var(--text-sub);
+    cursor: pointer; background: var(--surface);
+    display: flex; align-items: center; gap: 5px; transition: all 0.15s;
+  }
+  .ex-tab.active { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+
+  .period-tabs { display: flex; gap: 6px; margin-bottom: 16px; }
+  .period-tab {
+    padding: 5px 14px; border-radius: 6px;
+    border: 1px solid var(--border);
+    font-size: 11px; font-weight: 700; color: var(--text-sub);
+    cursor: pointer; background: var(--surface); transition: all 0.15s;
+  }
+  .period-tab.active { background: var(--accent); color: #111; border-color: var(--accent); }
+
+  .graph-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px; margin-bottom: 14px;
+  }
+  .graph-card-title { font-size: 11px; color: var(--text-sub); letter-spacing: 1px; margin-bottom: 14px; }
+
+  .bar-chart-scroll {
+    overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 4px;
+  }
+  .bar-chart-scroll::-webkit-scrollbar { height: 3px; }
+  .bar-chart-scroll::-webkit-scrollbar-track { background: var(--surface2); border-radius: 2px; }
+  .bar-chart-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .bar-chart { display: flex; align-items: flex-end; gap: 6px; height: 165px; width: max-content; min-width: 100%; }
+  .bar-col { width: 14px; display: flex; flex-direction: column; align-items: center; gap: 3px; flex-shrink: 0; }
+  .bar { width: 100%; border-radius: 3px 3px 0 0; background: var(--surface2); min-height: 3px; }
+  .bar-lbl { font-size: 8px; color: var(--text-muted); text-align: center; white-space: nowrap; }
+  .bar-v { font-size: 8px; color: var(--text-sub); }
+
+  .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .summary-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px;
+  }
+  .summary-lbl { font-size: 10px; color: var(--text-sub); letter-spacing: 1px; margin-bottom: 6px; }
+  .summary-val {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 30px; color: var(--text); line-height: 1;
+  }
+  .summary-val em { font-family: 'Noto Sans JP', sans-serif; font-size: 12px; color: var(--text-sub); font-style: normal; }
+  .summary-sub { font-size: 10px; color: var(--text-sub); margin-top: 4px; }
+
+  /* ==============================================
+     デスクトップ レイアウト（640px 以上）
+  ============================================== */
+  @media (min-width: 640px) {
+    body {
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+    }
+
+    .app-wrapper {
+      max-width: 900px;
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      align-items: stretch;
+      overflow: hidden;
+    }
+
+    /* ===== サイドバー ===== */
+    .sidebar-nav {
+      display: flex;
+      flex-direction: column;
+      width: 200px;
+      flex-shrink: 0;
+      height: 100vh;
+      background: var(--bg);
+      border-right: 1px solid var(--border);
+    }
+
+    .sidebar-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 21px;
+      letter-spacing: 3px;
+      color: var(--accent);
+      line-height: 1.15;
+      padding: 24px 20px 22px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 8px;
+    }
+
+    .sidebar-nav .nav-item {
+      flex-direction: row;
+      justify-content: flex-start;
+      align-items: center;
+      padding: 14px 20px;
+      gap: 12px;
+      border-left: 3px solid transparent;
+      transition: all 0.15s;
+    }
+    .sidebar-nav .nav-item.active {
+      border-left-color: var(--accent);
+      background: var(--accent-dim);
+    }
+    .sidebar-nav .nav-icon { font-size: 20px; opacity: 0.45; }
+    .sidebar-nav .nav-item.active .nav-icon { opacity: 1; }
+    .sidebar-nav .nav-label { font-size: 14px; font-weight: 500; }
+    .sidebar-nav .nav-item.active .nav-label { color: var(--accent); }
+
+    /* ===== メインコンテンツ（スクロール領域） ===== */
+    .main-content {
+      flex: 1;
+      min-width: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    /* ===== ボトムナビ 非表示 ===== */
+    .bottom-nav { display: none; }
+
+    /* ページの下余白を縮小（ボトムナビ分が不要になるため） */
+    .page { padding-bottom: 48px; }
+
+    /* ===== 記録画面：種目ボタンを2列に ===== */
+    .exercise-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    /* ===== グラフ画面：サマリーを4列に ===== */
+    .summary-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="mock-badge">UI MOCK</div>
+
+<div class="app-wrapper">
+
+  <!-- ===== サイドバーナビ（デスクトップのみ） ===== -->
+  <nav class="sidebar-nav">
+    <div class="sidebar-logo">WORKOUT<br>LOG</div>
+    <div class="nav-item active" data-page="record" onclick="switchPage('record')">
+      <div class="nav-icon">📝</div>
+      <div class="nav-label">記録</div>
+    </div>
+    <div class="nav-item" data-page="history" onclick="switchPage('history')">
+      <div class="nav-icon">📋</div>
+      <div class="nav-label">履歴</div>
+    </div>
+    <div class="nav-item" data-page="graph" onclick="switchPage('graph')">
+      <div class="nav-icon">📈</div>
+      <div class="nav-label">グラフ</div>
+    </div>
+  </nav>
+
+  <!-- ===== メインコンテンツ ===== -->
+  <div class="main-content">
+
+    <!-- ===== ヘッダー（共通） ===== -->
+    <div class="header">
+      <div class="header-row">
+        <div class="app-title">WORKOUT LOG</div>
+        <div class="date-label">2026 / 05 / 03</div>
+      </div>
+      <div class="stats-row">
+        <div class="stat-cell">
+          <div class="stat-num">3<em>回</em></div>
+          <div class="stat-label">今日の記録</div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-num">12<em>日</em></div>
+          <div class="stat-label">継続日数</div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-num">47<em>回</em></div>
+          <div class="stat-label">累計記録</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 記録ページ ===== -->
+    <div class="page active" id="page-record">
+
+      <div class="section-label">種目を選ぶ</div>
+      <div class="exercise-grid">
+        <button class="exercise-btn active">
+          <div class="exercise-icon">🦵</div>
+          <div class="exercise-info">
+            <div class="exercise-name">スクワット</div>
+            <div class="exercise-name-en">Squat</div>
+          </div>
+          <div class="exercise-check">✓</div>
+        </button>
+        <button class="exercise-btn">
+          <div class="exercise-icon">🦶</div>
+          <div class="exercise-info">
+            <div class="exercise-name">カーフレイズ</div>
+            <div class="exercise-name-en">Calf Raise</div>
+          </div>
+          <div class="exercise-check">✓</div>
+        </button>
+        <button class="exercise-btn">
+          <div class="exercise-icon">🔥</div>
+          <div class="exercise-info">
+            <div class="exercise-name">クランチ</div>
+            <div class="exercise-name-en">Crunch</div>
+          </div>
+          <div class="exercise-check">✓</div>
+        </button>
+        <button class="add-exercise-btn">
+          <div class="add-exercise-icon">＋</div>
+          <div class="add-exercise-label">種目を追加する</div>
+        </button>
+      </div>
+
+      <div class="section-label">回数 / セット数</div>
+      <div class="input-grid">
+        <div class="input-card">
+          <div class="input-card-label">回数</div>
+          <div class="counter">
+            <div class="counter-btn">−</div>
+            <div class="counter-val">10</div>
+            <div class="counter-btn plus">＋</div>
+          </div>
+        </div>
+        <div class="input-card">
+          <div class="input-card-label">セット数</div>
+          <div class="counter">
+            <div class="counter-btn">−</div>
+            <div class="counter-val">1</div>
+            <div class="counter-btn plus">＋</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label">メモ（任意）</div>
+      <div class="memo-wrap">
+        <textarea class="memo-input" rows="2" placeholder="今日の調子、気づきなど…"></textarea>
+      </div>
+
+      <button class="record-btn">RECORD</button>
+
+      <div class="section-label">今日のログ</div>
+      <div class="log-list">
+        <div class="log-item">
+          <div class="log-left">
+            <div class="log-icon">🦵</div>
+            <div>
+              <div class="log-name">スクワット</div>
+              <div class="log-time">09:12</div>
+            </div>
+          </div>
+          <div class="log-right">
+            <div class="log-total">20<em>回</em></div>
+            <div class="log-detail">10回 × 2セット</div>
+          </div>
+        </div>
+        <div class="log-item">
+          <div class="log-left">
+            <div class="log-icon">🦵</div>
+            <div>
+              <div class="log-name">スクワット</div>
+              <div class="log-time">10:45</div>
+            </div>
+          </div>
+          <div class="log-right">
+            <div class="log-total">15<em>回</em></div>
+            <div class="log-detail">15回 × 1セット</div>
+          </div>
+        </div>
+        <div class="log-item">
+          <div class="log-left">
+            <div class="log-icon">🦶</div>
+            <div>
+              <div class="log-name">カーフレイズ</div>
+              <div class="log-time">12:00</div>
+            </div>
+          </div>
+          <div class="log-right">
+            <div class="log-total">30<em>回</em></div>
+            <div class="log-detail">15回 × 2セット</div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /#page-record -->
+
+    <!-- ===== 履歴ページ ===== -->
+    <div class="page" id="page-history">
+
+      <div class="history-day">
+        <div class="history-day-head">
+          <div class="history-day-date">05 / 03 SUN</div>
+          <div class="history-day-line"></div>
+          <div class="history-day-badge">3件</div>
+        </div>
+
+        <div class="history-item">
+          <div class="history-item-top">
+            <div class="history-left">
+              <div class="history-icon">🦵</div>
+              <div>
+                <div class="history-name">スクワット</div>
+                <div class="history-meta">09:12</div>
+              </div>
+            </div>
+            <div class="history-right">
+              <div class="history-nums">
+                <div class="history-total">20<em>回</em></div>
+                <div class="history-detail">10回 × 2セット</div>
+              </div>
+              <div class="history-edit-btn">✏️</div>
+            </div>
+          </div>
+          <div class="history-memo-row">💬 きつかった</div>
+        </div>
+
+        <div class="history-item">
+          <div class="history-item-top">
+            <div class="history-left">
+              <div class="history-icon">🦵</div>
+              <div>
+                <div class="history-name">スクワット</div>
+                <div class="history-meta">10:45</div>
+              </div>
+            </div>
+            <div class="history-right">
+              <div class="history-nums">
+                <div class="history-total">15<em>回</em></div>
+                <div class="history-detail">15回 × 1セット</div>
+              </div>
+              <div class="history-edit-btn">✏️</div>
+            </div>
+          </div>
+          <div class="history-memo-row">💬 フォームを意識してゆっくりやった。膝が少し痛かったので深くしゃがまないようにした。</div>
+        </div>
+
+        <div class="history-item">
+          <div class="history-item-top">
+            <div class="history-left">
+              <div class="history-icon">🦶</div>
+              <div>
+                <div class="history-name">カーフレイズ</div>
+                <div class="history-meta">12:00</div>
+              </div>
+            </div>
+            <div class="history-right">
+              <div class="history-nums">
+                <div class="history-total">30<em>回</em></div>
+                <div class="history-detail">15回 × 2セット</div>
+              </div>
+              <div class="history-edit-btn">✏️</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="history-day">
+        <div class="history-day-head">
+          <div class="history-day-date">05 / 02 SAT</div>
+          <div class="history-day-line"></div>
+          <div class="history-day-badge">2件</div>
+        </div>
+        <div class="history-item">
+          <div class="history-item-top">
+            <div class="history-left">
+              <div class="history-icon">🦵</div>
+              <div>
+                <div class="history-name">スクワット</div>
+                <div class="history-meta">11:00</div>
+              </div>
+            </div>
+            <div class="history-right">
+              <div class="history-nums">
+                <div class="history-total">30<em>回</em></div>
+                <div class="history-detail">10回 × 3セット</div>
+              </div>
+              <div class="history-edit-btn">✏️</div>
+            </div>
+          </div>
+          <div class="history-memo-row">💬 キツかった</div>
+        </div>
+        <div class="history-item">
+          <div class="history-item-top">
+            <div class="history-left">
+              <div class="history-icon">🔥</div>
+              <div>
+                <div class="history-name">クランチ</div>
+                <div class="history-meta">14:30</div>
+              </div>
+            </div>
+            <div class="history-right">
+              <div class="history-nums">
+                <div class="history-total">40<em>回</em></div>
+                <div class="history-detail">20回 × 2セット</div>
+              </div>
+              <div class="history-edit-btn">✏️</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="history-day">
+        <div class="history-day-head">
+          <div class="history-day-date">05 / 01 FRI</div>
+          <div class="history-day-line"></div>
+          <div class="history-day-badge">1件</div>
+        </div>
+        <div class="history-item">
+          <div class="history-item-top">
+            <div class="history-left">
+              <div class="history-icon">🦵</div>
+              <div>
+                <div class="history-name">スクワット</div>
+                <div class="history-meta">09:30</div>
+              </div>
+            </div>
+            <div class="history-right">
+              <div class="history-nums">
+                <div class="history-total">20<em>回</em></div>
+                <div class="history-detail">10回 × 2セット</div>
+              </div>
+              <div class="history-edit-btn">✏️</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /#page-history -->
+
+    <!-- ===== グラフページ ===== -->
+    <div class="page" id="page-graph">
+
+      <div class="section-label">種目を選ぶ</div>
+      <div class="exercise-tabs">
+        <div class="ex-tab active">🦵 スクワット</div>
+        <div class="ex-tab">🦶 カーフレイズ</div>
+        <div class="ex-tab">🔥 クランチ</div>
+      </div>
+
+      <div class="period-tabs">
+        <div class="period-tab">7日</div>
+        <div class="period-tab active">30日</div>
+        <div class="period-tab">3ヶ月</div>
+      </div>
+
+      <div class="summary-grid" style="margin-bottom:14px;">
+        <div class="summary-card">
+          <div class="summary-lbl">今月の合計</div>
+          <div class="summary-val">340<em>回</em></div>
+          <div class="summary-sub">スクワット</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-lbl">今月の記録数</div>
+          <div class="summary-val">18<em>回</em></div>
+          <div class="summary-sub">先月比 +3</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-lbl">1日平均</div>
+          <div class="summary-val">19<em>回</em></div>
+          <div class="summary-sub">合計回数 ÷ 日数</div>
+        </div>
+        <div class="summary-card">
+          <div class="summary-lbl">最高記録</div>
+          <div class="summary-val">60<em>回</em></div>
+          <div class="summary-sub">4月28日</div>
+        </div>
+      </div>
+
+      <div class="graph-card">
+        <div class="graph-card-title">日別 合計回数（スクワット）</div>
+        <div class="bar-chart-scroll"><div class="bar-chart" id="barChart"></div></div>
+      </div>
+
+    </div><!-- /#page-graph -->
+
+  </div><!-- /.main-content -->
+
+</div><!-- /.app-wrapper -->
+
+<!-- ===== ボトムナビ（モバイルのみ） ===== -->
+<div class="bottom-nav">
+  <div class="nav-item active" data-page="record" onclick="switchPage('record')">
+    <div class="nav-icon">📝</div>
+    <div class="nav-label">記録</div>
+  </div>
+  <div class="nav-item" data-page="history" onclick="switchPage('history')">
+    <div class="nav-icon">📋</div>
+    <div class="nav-label">履歴</div>
+  </div>
+  <div class="nav-item" data-page="graph" onclick="switchPage('graph')">
+    <div class="nav-icon">📈</div>
+    <div class="nav-label">グラフ</div>
+  </div>
+</div>
+
+<script>
+  function switchPage(name) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n => {
+      n.classList.toggle('active', n.dataset.page === name);
+    });
+  }
+
+  document.querySelectorAll('.exercise-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.exercise-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  // 棒グラフ
+  const data = [20,0,30,10,20,30,0,20,10,30,20,10,0,40,20,10,20,30,10,0,20,30,20,10,60,20,0,30,35,20];
+  const labels = ['4/4','4/5','4/6','4/7','4/8','4/9','4/10','4/11','4/12','4/13','4/14','4/15','4/16','4/17','4/18','4/19','4/20','4/21','4/22','4/23','4/24','4/25','4/26','4/27','4/28','4/29','4/30','5/1','5/2','今日'];
+  const chart = document.getElementById('barChart');
+  const max = Math.max(...data);
+
+  data.forEach((v, i) => {
+    const col = document.createElement('div');
+    col.className = 'bar-col';
+    const isToday = i === data.length - 1;
+    const isMax = v === max && v > 0;
+    const h = v > 0 ? Math.max((v / max) * 140, 8) : 4;
+
+    let barColor;
+    if (isToday) {
+      barColor = '#ff9f40';
+    } else if (v === 0) {
+      barColor = 'var(--surface2)';
+    } else {
+      const ratio = v / max;
+      const alpha = 0.35 + ratio * 0.65;
+      barColor = `rgba(212, 245, 60, ${alpha})`;
+    }
+
+    col.innerHTML = `
+      <div class="bar-v">${isMax ? '★' : (v > 0 ? v : '')}</div>
+      <div class="bar" style="height:${h}px; background:${barColor}; ${isMax ? 'box-shadow:0 0 8px rgba(212,245,60,0.5)' : ''}"></div>
+      <div class="bar-lbl">${labels[i]}</div>
+    `;
+    chart.appendChild(col);
+  });
+</script>
+</body>
+</html>
