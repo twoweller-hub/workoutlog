@@ -393,7 +393,12 @@
     font-size: 14px; font-weight: 700; font-family: 'Noto Sans JP', sans-serif; cursor: pointer;
   }
   .modal-btn-cancel { background: var(--surface2); color: var(--text-sub); }
-  .modal-btn-delete { background: var(--danger); color: #fff; }
+  .modal-btn-delete {
+    width: 100%; padding: 12px; border: none; border-radius: 10px;
+    font-size: 14px; font-weight: 700; font-family: 'Noto Sans JP', sans-serif; cursor: pointer;
+    background: transparent; color: var(--danger);
+    border: 1.5px solid var(--danger); margin-bottom: 10px;
+  }
   .modal-btn-save { background: var(--accent); color: #111; }
 
   /* ===== Toast ===== */
@@ -637,8 +642,8 @@
       </div>
     </div>
     <textarea class="modal-memo" id="modal-memo" rows="2" placeholder="メモ（任意）"></textarea>
+    <button class="modal-btn modal-btn-delete" onclick="onModalDelete()">削除</button>
     <div class="modal-buttons">
-      <button class="modal-btn modal-btn-delete" onclick="onModalDelete()">削除</button>
       <button class="modal-btn modal-btn-cancel" onclick="closeEditModal()">キャンセル</button>
       <button class="modal-btn modal-btn-save" onclick="onModalSave()">保存</button>
     </div>
