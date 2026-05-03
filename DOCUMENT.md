@@ -24,30 +24,48 @@
 ## Step 2: Google Apps Script を設定する
 
 1. スプレッドシートのメニューから「拡張機能」→「Apps Script」を開く
-2. エディタ左側の `コード.gs` を削除し、`gas/code.gs` の内容をすべて貼り付ける
-3. 1行目の `YOUR_SPREADSHEET_ID` を Step 1 でコピーしたスプレッドシートIDに書き換える  
+2. 画面左側に「コード.gs」というファイルが表示されているので、その中身をすべて削除する
+3. `gas/code.gs` の内容をすべてコピーして貼り付ける
+4. 貼り付けたコードの1行目にある `SPREADSHEET_ID` の値を、Step 1 でコピーしたIDに書き換える
    ```
-   const SPREADSHEET_ID = '12pZVt7aGA5NzBeRZN...（実際のID）';
+   const SPREADSHEET_ID = '（ここにスプレッドシートIDを貼り付ける）';
    ```
-4. 上部の関数選択プルダウンで `setupSpreadsheet` を選び、▶ 実行ボタンをクリック
-   - 「権限を確認」→「許可」で進む
-   - スプレッドシートに「種目リスト」「記録」の2シートが作成され、初期種目が追加される
+5. 画面上部の保存ボタン（フロッピーディスクのアイコン）をクリックして保存する
 
 ---
 
-## Step 3: GAS をウェブアプリとしてデプロイする
+## Step 3: setupSpreadsheet を実行する
 
-1. Apps Script エディタ右上の「デプロイ」→「新しいデプロイ」をクリック
-2. 種類: **ウェブアプリ**
-3. 設定:
+スプレッドシートに必要なシートと初期データを作成します。
+
+1. Apps Script エディタの画面上部中央に、関数名が表示されるプルダウンがある
+   - 最初は「関数を選択」や「doGet」などと表示されている
+2. そのプルダウンをクリックして、一覧から「**setupSpreadsheet**」を選ぶ
+3. 選んだら左隣の「▶ 実行」ボタン（三角形のボタン）をクリックする
+4. 「承認が必要です」という画面が出たら：
+   - 「権限を確認」をクリック
+   - Google アカウントを選択
+   - 「詳細」→「Workout Log（安全ではないページ）に移動」をクリック
+   - 「許可」をクリック
+5. 実行が完了すると、スプレッドシートに「種目リスト」「記録」の2つのシートが作成される
+
+---
+
+## Step 4: GAS をウェブアプリとしてデプロイする
+
+1. Apps Script エディタの右上にある青い「**デプロイ**」ボタンをクリック
+2. 表示されたメニューから「**新しいデプロイ**」を選ぶ
+3. 「種類の選択」の歯車アイコンをクリック → 「**ウェブアプリ**」を選ぶ
+4. 以下のように設定する：
    - 説明: 任意（例: Workout Log v1）
    - 次のユーザーとして実行: **自分**
    - アクセスできるユーザー: **全員**
-4. 「デプロイ」をクリック → 表示されたURLをコピー（`https://script.google.com/macros/s/...` で始まる長いURL）
+5. 「デプロイ」ボタンをクリック
+6. 「ウェブアプリの URL」として表示された長いURL（`https://script.google.com/macros/s/...` で始まる）をコピーしておく
 
 ---
 
-## Step 4: index.html に GAS URL を設定する
+## Step 5: index.html に GAS URL を設定する
 
 `index.html` をテキストエディタで開き、以下の行を書き換える:
 
@@ -56,12 +74,12 @@ const GAS_URL = 'YOUR_GAS_URL';
 ```
 ↓
 ```javascript
-const GAS_URL = 'https://script.google.com/macros/s/【Step3でコピーしたURL】/exec';
+const GAS_URL = 'https://script.google.com/macros/s/【Step4でコピーしたURL】/exec';
 ```
 
 ---
 
-## Step 5: アイコン画像を生成する
+## Step 6: アイコン画像を生成する
 
 ターミナルで以下を実行（workoutlog フォルダ内で）:
 
@@ -73,7 +91,7 @@ swift make_icons.swift
 
 ---
 
-## Step 6: GitHub にアップロードする
+## Step 7: GitHub にアップロードする
 
 1. GitHub で `workoutlog` という名前のリポジトリを新規作成
    - 「Add a README file」はチェックしない
@@ -88,12 +106,13 @@ git remote add origin https://github.com/twoweller-hub/workoutlog.git
 git push -u origin main
 ```
 
-3. GitHub のリポジトリページで「Settings」→「Pages」→ Source を `main` ブランチ・`/ (root)` に設定
-4. 数分後に `https://twoweller-hub.github.io/workoutlog/` でアクセスできるようになる
+3. GitHub のリポジトリページで「Settings」→「Pages」を開く
+4. 「Branch」のプルダウンで「main」を選び、その右のプルダウンで「/ (root)」を選んで「Save」
+5. 数分後に `https://twoweller-hub.github.io/workoutlog/` でアクセスできるようになる
 
 ---
 
-## Step 7: PWA としてホーム画面に追加する（Galaxy の場合）
+## Step 8: PWA としてホーム画面に追加する（Galaxy の場合）
 
 1. Galaxy の Chrome ブラウザで `https://twoweller-hub.github.io/workoutlog/` を開く
 2. 右上メニュー（⋮）→「ホーム画面に追加」
@@ -113,8 +132,13 @@ git push -u origin main
 
 ## GAS のコードを変更したとき
 
-GAS を修正した場合、**「デプロイ」→「デプロイを管理」→「編集（鉛筆アイコン）」→「バージョン: 新しいバージョン」** でデプロイを更新する。  
-（再デプロイしないと変更が反映されない）
+GAS を修正した場合は、以下の手順で再デプロイしないと変更が反映されない：
+
+1. Apps Script エディタ右上の青い「**デプロイ**」ボタンをクリック
+2. 「**デプロイを管理**」を選ぶ
+3. 表示されたデプロイの右側にある鉛筆アイコン（編集）をクリック
+4. 「バージョン」のプルダウンで「**新しいバージョン**」を選ぶ
+5. 「デプロイ」をクリック
 
 ---
 
