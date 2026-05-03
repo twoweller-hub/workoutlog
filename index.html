@@ -574,7 +574,15 @@
     <!-- グラフページ -->
     <div class="page" id="page-graph">
       <div class="section-label">種目を選ぶ</div>
-      <div class="exercise-tabs" id="graph-ex-tabs"></div>
+      <div class="ex-dropdown" id="graph-ex-dropdown">
+        <button class="ex-dropdown-trigger" id="graph-ex-dropdown-trigger" onclick="toggleGraphExDropdown()">
+          <div class="ex-dropdown-trigger-left" id="graph-ex-dropdown-selected">
+            <span class="ex-dropdown-placeholder">種目を選ぶ</span>
+          </div>
+          <span class="ex-dropdown-arrow">▼</span>
+        </button>
+        <div class="ex-dropdown-list" id="graph-ex-dropdown-list"></div>
+      </div>
 
       <div class="period-tabs">
         <div class="period-tab" data-days="7" onclick="selectPeriod(this)">7日</div>
@@ -771,8 +779,10 @@
   }
 
   document.addEventListener('click', function(e) {
-    const dropdown = document.getElementById('ex-dropdown');
-    if (dropdown && !dropdown.contains(e.target)) closeExDropdown();
+    const dd = document.getElementById('ex-dropdown');
+    if (dd && !dd.contains(e.target)) closeExDropdown();
+    const gdd = document.getElementById('graph-ex-dropdown');
+    if (gdd && !gdd.contains(e.target)) closeGraphExDropdown();
   });
 
   function selectExercise(name) {
@@ -967,27 +977,48 @@
   // ── グラフ画面 ─────────────────────────────────────────────
   function renderGraph() {
     if (!exercises.length) {
-      document.getElementById('graph-ex-tabs').innerHTML = '<div class="empty-msg">種目がありません</div>';
+      document.getElementById('graph-ex-dropdown-list').innerHTML = '<div class="empty-msg" style="padding:12px 16px">種目がありません</div>';
       return;
     }
     if (!currentGraphExercise || !exercises.find(e => e.name === currentGraphExercise)) {
       currentGraphExercise = exercises[0].name;
     }
-    renderGraphTabs();
+    renderGraphDropdown();
     renderGraphContent();
   }
 
-  function renderGraphTabs() {
-    document.getElementById('graph-ex-tabs').innerHTML = exercises.map(ex => `
-      <div class="ex-tab ${ex.name === currentGraphExercise ? 'active' : ''}"
-           onclick="selectGraphExercise('${h(ex.name)}')">
-        ${ex.emoji} ${h(ex.name)}
-      </div>`).join('');
+  function renderGraphDropdown() {
+    const list = document.getElementById('graph-ex-dropdown-list');
+    list.innerHTML = exercises.map(ex => `
+      <button class="ex-dropdown-item${ex.name === currentGraphExercise ? ' active' : ''}"
+              data-name="${h(ex.name)}" onclick="selectGraphExercise('${h(ex.name)}')">
+        <div class="ex-dropdown-item-emoji">${ex.emoji}</div>
+        <div class="ex-dropdown-item-name">${h(ex.name)}</div>
+      </button>`).join('');
+    const ex = exercises.find(e => e.name === currentGraphExercise);
+    if (ex) {
+      document.getElementById('graph-ex-dropdown-selected').innerHTML =
+        `<div class="ex-dropdown-trigger-emoji">${ex.emoji}</div><div class="ex-dropdown-trigger-name">${h(ex.name)}</div>`;
+    }
+  }
+
+  function toggleGraphExDropdown() {
+    const trigger = document.getElementById('graph-ex-dropdown-trigger');
+    const list = document.getElementById('graph-ex-dropdown-list');
+    const isOpen = list.classList.contains('open');
+    trigger.classList.toggle('open', !isOpen);
+    list.classList.toggle('open', !isOpen);
+  }
+
+  function closeGraphExDropdown() {
+    document.getElementById('graph-ex-dropdown-trigger').classList.remove('open');
+    document.getElementById('graph-ex-dropdown-list').classList.remove('open');
   }
 
   function selectGraphExercise(name) {
     currentGraphExercise = name;
-    renderGraphTabs();
+    renderGraphDropdown();
+    closeGraphExDropdown();
     renderGraphContent();
   }
 
