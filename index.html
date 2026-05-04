@@ -1248,11 +1248,12 @@
     if (!ex) return;
     ex.emoji = emoji;
     ex.unit = unit;
+    const name = editingExerciseName;
     closeExEditModal();
     renderExerciseManagement();
     renderExerciseGrid();
     if (currentGraphExercise) renderGraphDropdown();
-    postGAS({ action: 'updateExercise', name: editingExerciseName, emoji, unit });
+    postGAS({ action: 'updateExercise', name, emoji, unit });
   }
 
   function onDeleteExercise(name) {
