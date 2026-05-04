@@ -344,11 +344,37 @@
   .ex-drag-handle { color: var(--text-muted); cursor: grab; font-size: 18px; padding: 4px 2px; flex-shrink: 0; }
   .ex-manage-emoji { font-size: 24px; flex-shrink: 0; }
   .ex-manage-name { flex: 1; font-size: 14px; font-weight: 500; }
+  .ex-unit-badge {
+    font-size: 11px; color: var(--text-sub);
+    border: 1px solid var(--border); border-radius: 4px;
+    padding: 2px 7px; flex-shrink: 0; font-weight: 500;
+  }
+  .ex-edit-btn {
+    background: none; border: none; color: var(--text-muted);
+    font-size: 16px; cursor: pointer; padding: 4px 6px; flex-shrink: 0;
+  }
   .ex-delete-btn {
     background: none; border: none; color: var(--text-muted);
     font-size: 18px; cursor: pointer; padding: 4px 8px; flex-shrink: 0;
   }
   .ex-delete-btn:active { color: var(--danger); }
+  .unit-toggle {
+    display: flex; border: 1.5px solid var(--border); border-radius: 8px; overflow: hidden; flex-shrink: 0;
+  }
+  .unit-btn {
+    padding: 8px 12px; background: none; border: none;
+    color: var(--text-sub); font-size: 13px; font-weight: 700;
+    font-family: 'Noto Sans JP', sans-serif; cursor: pointer; transition: all 0.15s;
+  }
+  .unit-btn.active { background: var(--accent); color: #111; }
+  .modal-text-input {
+    width: 100%; background: var(--surface2);
+    border: 1.5px solid var(--border); border-radius: 10px;
+    padding: 10px 14px; color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif; font-size: 20px;
+    outline: none; margin-bottom: 16px; text-align: center;
+  }
+  .modal-text-input:focus { border-color: var(--accent); }
 
   /* ===== モーダル ===== */
   .modal-overlay {
@@ -533,10 +559,10 @@
       </div>
 
       <div id="input-area" style="display:none">
-        <div class="section-label">回数 / セット数</div>
+        <div class="section-label" id="record-section-label">回数 / セット数</div>
         <div class="input-grid">
           <div class="input-card">
-            <div class="input-card-label">回数</div>
+            <div class="input-card-label" id="reps-label">回数</div>
             <div class="counter">
               <div class="counter-btn" onclick="changeCounter('reps',-1)">−</div>
               <div class="counter-val" id="reps-val">10</div>
@@ -611,6 +637,13 @@
             <div class="add-ex-label">種目名</div>
             <input type="text" id="inp-name" class="add-ex-input" placeholder="例：スクワット">
           </div>
+          <div class="add-ex-group">
+            <div class="add-ex-label">単位</div>
+            <div class="unit-toggle" id="inp-unit">
+              <button class="unit-btn active" data-unit="回" onclick="selectAddUnit(this)">回</button>
+              <button class="unit-btn" data-unit="秒" onclick="selectAddUnit(this)">秒</button>
+            </div>
+          </div>
           <button class="add-ex-btn" onclick="onAddExercise()">追加</button>
         </div>
       </div>
@@ -669,6 +702,25 @@
       <button class="modal-btn modal-btn-save" onclick="onModalSave()">保存</button>
     </div>
     <button class="modal-delete-link" onclick="onModalDelete()">この記録を削除する</button>
+  </div>
+</div>
+
+<!-- 種目編集モーダル -->
+<div class="modal-overlay" id="ex-edit-modal">
+  <div class="modal">
+    <div class="modal-title" id="ex-edit-modal-name"></div>
+    <div class="modal-meta" style="margin-bottom:16px">絵文字と単位を変更できます</div>
+    <div class="modal-input-label">絵文字</div>
+    <input type="text" id="ex-edit-emoji" class="modal-text-input" maxlength="2" placeholder="💪">
+    <div class="modal-input-label" style="margin-bottom:8px">単位</div>
+    <div class="unit-toggle" id="ex-edit-unit" style="margin-bottom:20px">
+      <button class="unit-btn active" data-unit="回" onclick="selectEditUnit(this)">回</button>
+      <button class="unit-btn" data-unit="秒" onclick="selectEditUnit(this)">秒</button>
+    </div>
+    <div class="modal-buttons">
+      <button class="modal-btn modal-btn-cancel" onclick="closeExEditModal()">キャンセル</button>
+      <button class="modal-btn modal-btn-save" onclick="onExEditSave()">保存</button>
+    </div>
   </div>
 </div>
 
@@ -799,6 +851,9 @@
       btn.classList.toggle('active', btn.dataset.name === name)
     );
     closeExDropdown();
+    const unit = getExUnit(name);
+    document.getElementById('reps-label').textContent = unit === '秒' ? '秒数' : '回数';
+    document.getElementById('record-section-label').textContent = unit === '秒' ? '秒数 / セット数' : '回数 / セット数';
     const reps = getReps(name);
     const sets = getSets(name);
     document.getElementById('reps-val').textContent = reps;
@@ -810,9 +865,10 @@
   function changeCounter(type, delta) {
     const id = type === 'reps' ? 'reps-val' : 'sets-val';
     const el = document.getElementById(id);
-    let val = parseInt(el.textContent) + delta;
+    const step = (type === 'reps' && getExUnit(selectedExercise) === '秒') ? 5 : 1;
+    let val = parseInt(el.textContent) + delta * step;
     if (val < 1) val = 1;
-    if (val > 999) val = 999;
+    if (val > 9999) val = 9999;
     el.textContent = val;
     if (selectedExercise) {
       if (type === 'reps') saveReps(selectedExercise, val);
@@ -864,8 +920,8 @@
           </div>
         </div>
         <div class="log-right">
-          <div class="log-total">${r.totalReps}<em>回</em></div>
-          <div class="log-detail">${r.reps}回 × ${r.sets}セット</div>
+          <div class="log-total">${r.totalReps}<em>${getExUnit(r.name)}</em></div>
+          <div class="log-detail">${r.reps}${getExUnit(r.name)} × ${r.sets}セット</div>
         </div>
       </div>`).join('');
   }
@@ -915,8 +971,8 @@
           </div>
           <div class="history-right">
             <div class="history-nums">
-              <div class="history-total">${r.totalReps}<em>回</em></div>
-              <div class="history-detail">${r.reps}回 × ${r.sets}セット</div>
+              <div class="history-total">${r.totalReps}<em>${getExUnit(r.name)}</em></div>
+              <div class="history-detail">${r.reps}${getExUnit(r.name)} × ${r.sets}セット</div>
             </div>
             <div class="history-edit-btn" onclick="openEditModal(${r.id})">✏️</div>
           </div>
@@ -1047,10 +1103,11 @@
     const dayAvg = monthDays ? Math.round(monthTotal / monthDays) : 0;
     let maxRec = exRecs.reduce((best, r) => r.totalReps > (best ? best.totalReps : 0) ? r : best, null);
 
+    const exUnit = ex.unit || '回';
     document.getElementById('graph-summary').innerHTML = `
       <div class="summary-card">
         <div class="summary-lbl">今月の合計</div>
-        <div class="summary-val">${monthTotal}<em>回</em></div>
+        <div class="summary-val">${monthTotal}<em>${exUnit}</em></div>
         <div class="summary-sub">${h(ex.name)}</div>
       </div>
       <div class="summary-card">
@@ -1060,12 +1117,12 @@
       </div>
       <div class="summary-card">
         <div class="summary-lbl">1日平均</div>
-        <div class="summary-val">${dayAvg}<em>回</em></div>
+        <div class="summary-val">${dayAvg}<em>${exUnit}</em></div>
         <div class="summary-sub">合計 ÷ 記録日数</div>
       </div>
       <div class="summary-card">
         <div class="summary-lbl">最高記録</div>
-        <div class="summary-val">${maxRec ? maxRec.totalReps : 0}<em>回</em></div>
+        <div class="summary-val">${maxRec ? maxRec.totalReps : 0}<em>${exUnit}</em></div>
         <div class="summary-sub">${maxRec ? maxRec.date : '—'}</div>
       </div>`;
 
@@ -1105,6 +1162,11 @@
   }
 
   // ── 種目管理 ────────────────────────────────────────────────
+  function getExUnit(name) {
+    const ex = exercises.find(e => e.name === name);
+    return ex ? (ex.unit || '回') : '回';
+  }
+
   function renderExerciseManagement() {
     const el = document.getElementById('ex-manage-list');
     if (!exercises.length) {
@@ -1116,6 +1178,8 @@
         <span class="ex-drag-handle">☰</span>
         <span class="ex-manage-emoji">${ex.emoji}</span>
         <span class="ex-manage-name">${h(ex.name)}</span>
+        <span class="ex-unit-badge">${ex.unit || '回'}</span>
+        <button class="ex-edit-btn" onclick="openExEditModal('${h(ex.name)}')">✏️</button>
         <button class="ex-delete-btn" onclick="onDeleteExercise('${h(ex.name)}')" title="削除">✕</button>
       </div>`).join('');
 
@@ -1132,18 +1196,63 @@
     }
   }
 
+  function selectAddUnit(btn) {
+    document.querySelectorAll('#inp-unit .unit-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  function selectEditUnit(btn) {
+    document.querySelectorAll('#ex-edit-unit .unit-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
   function onAddExercise() {
     const nameEl = document.getElementById('inp-name');
     const emojiEl = document.getElementById('inp-emoji');
     const name = nameEl.value.trim();
     const emoji = emojiEl.value.trim() || '💪';
+    const unit = document.querySelector('#inp-unit .unit-btn.active').dataset.unit;
     if (!name) { nameEl.focus(); return; }
     if (exercises.find(e => e.name === name)) { showToast('同じ種目名がすでに存在します'); return; }
-    exercises.push({ name, emoji });
+    exercises.push({ name, emoji, unit });
     nameEl.value = ''; emojiEl.value = '';
+    document.querySelectorAll('#inp-unit .unit-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
     renderExerciseManagement();
     renderExerciseGrid();
-    postGAS({ action: 'addExercise', name, emoji });
+    postGAS({ action: 'addExercise', name, emoji, unit });
+  }
+
+  let editingExerciseName = null;
+
+  function openExEditModal(name) {
+    const ex = exercises.find(e => e.name === name);
+    if (!ex) return;
+    editingExerciseName = name;
+    document.getElementById('ex-edit-modal-name').textContent = ex.name;
+    document.getElementById('ex-edit-emoji').value = ex.emoji || '';
+    const unit = ex.unit || '回';
+    document.querySelectorAll('#ex-edit-unit .unit-btn').forEach(b => b.classList.toggle('active', b.dataset.unit === unit));
+    document.getElementById('ex-edit-modal').classList.add('active');
+  }
+
+  function closeExEditModal() {
+    editingExerciseName = null;
+    document.getElementById('ex-edit-modal').classList.remove('active');
+  }
+
+  function onExEditSave() {
+    if (!editingExerciseName) return;
+    const emoji = document.getElementById('ex-edit-emoji').value.trim() || '💪';
+    const unit = document.querySelector('#ex-edit-unit .unit-btn.active').dataset.unit;
+    const ex = exercises.find(e => e.name === editingExerciseName);
+    if (!ex) return;
+    ex.emoji = emoji;
+    ex.unit = unit;
+    closeExEditModal();
+    renderExerciseManagement();
+    renderExerciseGrid();
+    if (currentGraphExercise) renderGraphDropdown();
+    postGAS({ action: 'updateExercise', name: editingExerciseName, emoji, unit });
   }
 
   function onDeleteExercise(name) {

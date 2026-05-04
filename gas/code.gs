@@ -24,6 +24,7 @@ function doPost(e) {
     if (action === 'updateRecord') return updateRecord(data);
     if (action === 'deleteRecord') return deleteRecord(data);
     if (action === 'addExercise') return addExercise(data);
+    if (action === 'updateExercise') return updateExercise(data);
     if (action === 'deleteExercise') return deleteExercise(data);
     if (action === 'reorderExercises') return reorderExercises(data);
     return errorResponse('Unknown action: ' + action);
@@ -40,7 +41,7 @@ function getData() {
   const exercises = [];
   for (let i = 1; i < exData.length; i++) {
     if (exData[i][0]) {
-      exercises.push({ name: String(exData[i][0]), emoji: String(exData[i][1] || '') });
+      exercises.push({ name: String(exData[i][0]), emoji: String(exData[i][1] || ''), unit: String(exData[i][2] || '回') });
     }
   }
 
@@ -129,7 +130,20 @@ function deleteRecord(data) {
 function addExercise(data) {
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   const sheet = ss.getSheetByName(EXERCISES_SHEET);
-  sheet.appendRow([data.name, data.emoji || '']);
+  sheet.appendRow([data.name, data.emoji || '', data.unit || '回']);
+  return okResponse();
+}
+
+function updateExercise(data) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(EXERCISES_SHEET);
+  const values = sheet.getDataRange().getValues();
+  for (let i = 1; i < values.length; i++) {
+    if (String(values[i][0]) === String(data.name)) {
+      sheet.getRange(i + 1, 2, 1, 2).setValues([[data.emoji || '', data.unit || '回']]);
+      break;
+    }
+  }
   return okResponse();
 }
 
@@ -151,7 +165,7 @@ function reorderExercises(data) {
   const sheet = ss.getSheetByName(EXERCISES_SHEET);
   const lastRow = sheet.getLastRow();
   if (lastRow > 1) sheet.deleteRows(2, lastRow - 1);
-  data.exercises.forEach(ex => sheet.appendRow([ex.name, ex.emoji || '']));
+  data.exercises.forEach(ex => sheet.appendRow([ex.name, ex.emoji || '', ex.unit || '回']));
   return okResponse();
 }
 
