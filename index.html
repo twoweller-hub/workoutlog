@@ -143,7 +143,8 @@
   .ex-dropdown-item:last-child { border-bottom: none; }
   .ex-dropdown-item.active { background: var(--accent-dim); }
   .ex-dropdown-item-emoji { font-size: 24px; width: 34px; text-align: center; flex-shrink: 0; }
-  .ex-dropdown-item-name { font-size: 15px; font-weight: 700; color: var(--text); }
+  .ex-dropdown-item-name { font-size: 15px; font-weight: 700; color: var(--text); flex: 1; }
+  .ex-dropdown-item-check { color: var(--accent); font-size: 14px; font-weight: 900; margin-left: 8px; flex-shrink: 0; }
 
   .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
   .input-card {
@@ -733,7 +734,7 @@
   let records = [];
   let selectedExercise = null;
   let editingRecordId = null;
-  let currentGraphExercise = null;
+  let currentGraphExercises = [];
   let currentPeriodDays = 30;
 
   // ── 初期化 ──────────────────────────────────────────────────
@@ -1039,25 +1040,33 @@
       document.getElementById('graph-ex-dropdown-list').innerHTML = '<div class="empty-msg" style="padding:12px 16px">種目がありません</div>';
       return;
     }
-    if (!currentGraphExercise || !exercises.find(e => e.name === currentGraphExercise)) {
-      currentGraphExercise = exercises[0].name;
-    }
+    currentGraphExercises = currentGraphExercises.filter(n => exercises.find(e => e.name === n));
+    if (!currentGraphExercises.length) currentGraphExercises = [exercises[0].name];
     renderGraphDropdown();
     renderGraphContent();
   }
 
   function renderGraphDropdown() {
     const list = document.getElementById('graph-ex-dropdown-list');
-    list.innerHTML = exercises.map(ex => `
-      <button class="ex-dropdown-item${ex.name === currentGraphExercise ? ' active' : ''}"
-              data-name="${h(ex.name)}" onclick="selectGraphExercise('${h(ex.name)}')">
-        <div class="ex-dropdown-item-emoji">${ex.emoji}</div>
-        <div class="ex-dropdown-item-name">${h(ex.name)}</div>
-      </button>`).join('');
-    const ex = exercises.find(e => e.name === currentGraphExercise);
-    if (ex) {
-      document.getElementById('graph-ex-dropdown-selected').innerHTML =
-        `<div class="ex-dropdown-trigger-emoji">${ex.emoji}</div><div class="ex-dropdown-trigger-name">${h(ex.name)}</div>`;
+    list.innerHTML = exercises.map(ex => {
+      const selected = currentGraphExercises.includes(ex.name);
+      return `
+        <button class="ex-dropdown-item${selected ? ' active' : ''}"
+                data-name="${h(ex.name)}" onclick="toggleGraphExercise('${h(ex.name)}')">
+          <div class="ex-dropdown-item-emoji">${ex.emoji}</div>
+          <div class="ex-dropdown-item-name">${h(ex.name)}</div>
+          ${selected ? '<div class="ex-dropdown-item-check">✓</div>' : ''}
+        </button>`;
+    }).join('');
+
+    const sel = document.getElementById('graph-ex-dropdown-selected');
+    if (currentGraphExercises.length === 1) {
+      const ex = exercises.find(e => e.name === currentGraphExercises[0]);
+      sel.innerHTML = ex
+        ? `<div class="ex-dropdown-trigger-emoji">${ex.emoji}</div><div class="ex-dropdown-trigger-name">${h(ex.name)}</div>`
+        : '<span class="ex-dropdown-placeholder">種目を選ぶ</span>';
+    } else {
+      sel.innerHTML = `<div class="ex-dropdown-trigger-name">${currentGraphExercises.length}種目選択中</div>`;
     }
   }
 
@@ -1074,10 +1083,15 @@
     document.getElementById('graph-ex-dropdown-list').classList.remove('open');
   }
 
-  function selectGraphExercise(name) {
-    currentGraphExercise = name;
+  function toggleGraphExercise(name) {
+    const idx = currentGraphExercises.indexOf(name);
+    if (idx === -1) {
+      currentGraphExercises.push(name);
+    } else {
+      if (currentGraphExercises.length === 1) return;
+      currentGraphExercises.splice(idx, 1);
+    }
     renderGraphDropdown();
-    closeGraphExDropdown();
     renderGraphContent();
   }
 
@@ -1089,9 +1103,12 @@
   }
 
   function renderGraphContent() {
-    const ex = exercises.find(e => e.name === currentGraphExercise);
-    if (!ex) return;
-    const exRecs = records.filter(r => r.name === currentGraphExercise);
+    if (!currentGraphExercises.length) return;
+    const selectedExs = exercises.filter(e => currentGraphExercises.includes(e.name));
+    const exRecs = records.filter(r => currentGraphExercises.includes(r.name));
+    const units = [...new Set(selectedExs.map(e => e.unit || '回'))];
+    const exUnit = units.length === 1 ? units[0] : '回';
+    const ex = selectedExs[0];
 
     // 今月の集計
     const now = new Date();
@@ -1103,12 +1120,12 @@
     const dayAvg = monthDays ? Math.round(monthTotal / monthDays) : 0;
     let maxRec = exRecs.reduce((best, r) => r.totalReps > (best ? best.totalReps : 0) ? r : best, null);
 
-    const exUnit = ex.unit || '回';
+    const titleLabel = currentGraphExercises.length === 1 ? h(ex.name) : currentGraphExercises.map(n => h(n)).join(' + ');
     document.getElementById('graph-summary').innerHTML = `
       <div class="summary-card">
         <div class="summary-lbl">今月の合計</div>
         <div class="summary-val">${monthTotal}<em>${exUnit}</em></div>
-        <div class="summary-sub">${h(ex.name)}</div>
+        <div class="summary-sub">${titleLabel}</div>
       </div>
       <div class="summary-card">
         <div class="summary-lbl">今月の記録数</div>
@@ -1138,7 +1155,7 @@
     const maxVal = Math.max(...values, 1);
     const today = todayStr();
     const chart = document.getElementById('bar-chart');
-    document.getElementById('graph-chart-title').textContent = '日別 合計回数（' + ex.name + '）';
+    document.getElementById('graph-chart-title').textContent = '日別 合計' + exUnit + '数（' + titleLabel + '）';
     chart.innerHTML = '';
     days.forEach((date, i) => {
       const v = values[i];
@@ -1252,7 +1269,7 @@
     closeExEditModal();
     renderExerciseManagement();
     renderExerciseGrid();
-    if (currentGraphExercise) renderGraphDropdown();
+    if (currentGraphExercises.length) renderGraphDropdown();
     postGAS({ action: 'updateExercise', name, emoji, unit });
   }
 
