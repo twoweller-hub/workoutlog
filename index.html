@@ -1184,7 +1184,7 @@
       const v = values[i];
       const isToday = date === today;
       const barH = v > 0 ? Math.max((v / maxVal) * 140, 8) : 4;
-      const isMax = v === maxVal && v > 0;
+
       let barColor;
       if (isToday) barColor = '#ff9f40';
       else if (v === 0) barColor = 'var(--surface2)';
@@ -1194,8 +1194,8 @@
       const col = document.createElement('div');
       col.className = 'bar-col';
       col.innerHTML = `
-        <div class="bar-v">${isMax && v > 0 ? '★' : (v > 0 ? v : '')}</div>
-        <div class="bar" style="height:${barH}px;background:${barColor};${isMax ? 'box-shadow:0 0 8px rgba(212,245,60,0.5)' : ''}"></div>
+        <div class="bar-v">${v > 0 ? v : ''}</div>
+        <div class="bar" style="height:${barH}px;background:${barColor}"></div>
         <div class="bar-lbl">${isToday ? '今日' : lbl}</div>`;
       chart.appendChild(col);
     });
