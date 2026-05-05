@@ -107,6 +107,7 @@ function updateRecord(data) {
   const values = sheet.getDataRange().getValues();
   for (let i = 1; i < values.length; i++) {
     if (String(values[i][0]) === String(data.id)) {
+      sheet.getRange(i + 1, 2, 1, 2).setValues([[data.date, data.time]]);
       sheet.getRange(i + 1, 6, 1, 4).setValues([[data.reps, data.sets, data.totalReps, data.memo || '']]);
       break;
     }

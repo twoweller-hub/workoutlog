@@ -411,6 +411,16 @@
   }
   .modal-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
   .modal-meta { font-size: 12px; color: var(--text-sub); margin-bottom: 20px; }
+  .modal-datetime-row { display: flex; gap: 8px; margin-bottom: 16px; }
+  .modal-datetime-group { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+  .modal-datetime-input {
+    width: 100%; background: var(--surface2);
+    border: 1.5px solid var(--border); border-radius: 10px;
+    padding: 10px 12px; color: var(--text);
+    font-family: 'Noto Sans JP', sans-serif; font-size: 14px;
+    outline: none; color-scheme: dark;
+  }
+  .modal-datetime-input:focus { border-color: var(--accent); }
   .modal-input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
   .modal-input-card {
     background: var(--surface2); border: 1.5px solid var(--border);
@@ -697,7 +707,16 @@
 <div class="modal-overlay" id="edit-modal">
   <div class="modal">
     <div class="modal-title" id="edit-modal-name"></div>
-    <div class="modal-meta" id="edit-modal-meta"></div>
+    <div class="modal-datetime-row">
+      <div class="modal-datetime-group">
+        <div class="modal-input-label">日付</div>
+        <input type="date" id="modal-date" class="modal-datetime-input">
+      </div>
+      <div class="modal-datetime-group">
+        <div class="modal-input-label">時刻</div>
+        <input type="time" id="modal-time" class="modal-datetime-input">
+      </div>
+    </div>
     <div class="modal-input-grid">
       <div class="modal-input-card">
         <div class="modal-input-label">回数</div>
@@ -1007,7 +1026,8 @@
     if (!rec) return;
     editingRecordId = id;
     document.getElementById('edit-modal-name').textContent = rec.emoji + ' ' + rec.name;
-    document.getElementById('edit-modal-meta').textContent = rec.date + '  ' + rec.time;
+    document.getElementById('modal-date').value = rec.date;
+    document.getElementById('modal-time').value = rec.time;
     document.getElementById('modal-reps-val').textContent = rec.reps;
     document.getElementById('modal-sets-val').textContent = rec.sets;
     document.getElementById('modal-memo').value = rec.memo || '';
@@ -1031,6 +1051,8 @@
   function onModalSave() {
     const rec = records.find(r => r.id === editingRecordId);
     if (!rec) return;
+    rec.date = document.getElementById('modal-date').value;
+    rec.time = document.getElementById('modal-time').value;
     rec.reps = parseInt(document.getElementById('modal-reps-val').textContent);
     rec.sets = parseInt(document.getElementById('modal-sets-val').textContent);
     rec.totalReps = rec.reps * rec.sets;
